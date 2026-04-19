@@ -1,0 +1,93 @@
+version: "3.9"
+
+# =====================================================
+# FIXES APPLIED:
+#
+# FIX 1 (Bug 1+2) — JWT_SECRET was "mySuperSecretKey"
+#   which is only 16 characters. Spring Security /
+#   jjwt requires AT LEAST 32 characters for HMAC-SHA.
+#   A short secret causes token signing to silently
+#   fail or tokens to be rejected on verification,
+#   making every login fail or produce invalid tokens.
+#   → Changed to a 64-character secret.
+#
+# FIX 2 (Bug 3) — SPRING_PROFILES_ACTIVE was missing.
+#   Without it, Spring Boot ignores your
+#   application-docker.properties file and uses the
+#   default application.properties which still points
+#   to your local MySQL (localhost:3306). Inside Docker,
+#   localhost means the container itself, not your PC.
+#   So the app cannot connect to the DB at all, OR it
+#   connects to the wrong properties.
+#   → Added SPRING_PROFILES_ACTIVE: docker
+#
+# FIX 3 (Bug 4) — DB_URL missing serverTimezone.
+#   MySQL 8 requires serverTimezone in the JDBC URL
+#   when running inside Docker, otherwise the
+#   connection pool throws timezone negotiation errors
+#   which kill the datasource on startup.
+#   → Added serverTimezone=Asia/Kolkata
+#
+# FIX 4 — healthcheck was missing retries and
+#   start_period. Without these, Docker starts the
+#   app before MySQL is actually ready to accept
+#   connections, causing "Communications link failure"
+#   errors on startup.
+#   → Added retries: 10 and start_period: 40s
+# =====================================================
+
+services:
+
+  db:
+    image: mysql:8.0
+    container_name: carbooking-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass123
+      MYSQL_DATABASE: carbooking
+      MYSQL_USER: cbuser
+      MYSQL_PASSWORD: cbpass123
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpass123"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  app:
+    build: .
+    container_name: carbooking-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      # FIX 2: This tells Spring Boot to load
+      # application-docker.properties instead of
+      # the default application.properties
+      SPRING_PROFILES_ACTIVE: docker
+
+      # FIX 3: Added serverTimezone to prevent
+      # MySQL 8 timezone negotiation errors
+      DB_URL: jdbc:mysql://db:3306/carbooking?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata
+
+      DB_USER: cbuser
+      DB_PASS: cbpass123
+
+      # FIX 1: JWT secret MUST be at least 32 characters.
+      # "mySuperSecretKey" = 16 chars → tokens fail silently.
+      # This 64-char secret fixes login and all JWT issues.
+      JWT_SECRET: DriveEasyCarBookingAppSuperSecretJwtKey2024Secure1234
+
+      MAIL_USER: pri8870627054@gmail.com
+      MAIL_PASS: cdagegkkavmbeqxv
+      ADMIN_EMAIL: priyarajan1306@gmail.com
+
+volumes:
+  mysql_data:

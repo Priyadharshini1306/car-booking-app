@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dashboard - DriveEasy</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="data:,">
+</head>
+<body>
+
+<nav>
+    <a href="/" class="brand">&#128663; DriveEasy</a>
+    <div class="nav-links">
+        <span style="color:var(--accent);font-weight:600;font-size:0.875rem;"
+              id="navUserName"></span>
+        <a href="cars.html">Browse Cars</a>
+        <a href="feedback.html">Feedback</a>
+        <a href="#" onclick="logout()">Logout</a>
+    </div>
+    <div class="hamburger" id="hamburger" onclick="toggleMobileNav()">
+        <span></span><span></span><span></span>
+    </div>
+</nav>
+
+<div class="mobile-nav" id="mobileNav">
+    <a href="cars.html">&#128663; Browse Cars</a>
+    <a href="feedback.html">&#11088; Feedback</a>
+    <a href="#" onclick="logout()">&#128682; Logout</a>
+</div>
+
+<!-- ===== TRACK MODAL ===== -->
+<div id="trackModal"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);
+            z-index:9999;align-items:center;justify-content:center;
+            padding:1rem;backdrop-filter:blur(3px);">
+    <div style="background:#fff;border-radius:var(--radius-lg);padding:2rem;
+                width:100%;max-width:520px;max-height:90vh;overflow-y:auto;
+                position:relative;box-shadow:var(--shadow-xl);animation:modalIn 0.25s ease;">
+
+        <button onclick="closeTrackModal()"
+                style="position:absolute;top:1rem;right:1rem;background:#f1f5f9;
+                       border:none;width:32px;height:32px;border-radius:50%;
+                       font-size:1.1rem;cursor:pointer;display:flex;
+                       align-items:center;justify-content:center;">
+            &times;
+        </button>
+
+        <h3 id="modalTitle"
+            style="color:var(--primary);margin:0 0 1.25rem;
+                   font-weight:800;padding-right:2rem;"></h3>
+
+        <div style="text-align:center;margin-bottom:1.25rem;">
+            <span id="modalStatus"
+                  style="padding:0.5rem 1.5rem;border-radius:20px;
+                         font-weight:700;color:#fff;font-size:0.9rem;"></span>
+        </div>
+
+        <div style="background:linear-gradient(135deg,#eef2ff,#e8f4ff);
+                    border-radius:var(--radius-md);padding:1.25rem;
+                    margin-bottom:1.25rem;text-align:center;border:1px solid #c7d2fe;">
+            <div style="font-size:2.5rem;margin-bottom:0.5rem;">&#128663;</div>
+            <div id="modalCarName"
+                 style="font-weight:700;font-size:1.1rem;color:var(--primary);"></div>
+            <div id="modalDriver"
+                 style="color:var(--text-light);font-size:0.875rem;margin-top:0.3rem;"></div>
+            <div id="modalDriverPhone" style="margin-top:0.5rem;"></div>
+        </div>
+
+        <!-- Trip times shown in 12-hour format -->
+        <div id="modalTimesBox"
+             style="background:#f0fff4;border-radius:var(--radius-md);
+                    padding:1rem 1.25rem;margin-bottom:1.25rem;
+                    border:1px solid #86efac;display:none;">
+            <div style="display:flex;justify-content:space-between;
+                        align-items:center;flex-wrap:wrap;gap:0.5rem;">
+                <div>
+                    <div style="font-size:0.7rem;color:var(--text-muted);
+                                font-weight:700;text-transform:uppercase;
+                                letter-spacing:0.5px;">From</div>
+                    <div id="modalFromTime"
+                         style="font-weight:700;color:#166534;font-size:0.9rem;"></div>
+                </div>
+                <div style="font-size:1.3rem;color:var(--text-muted);">&#8594;</div>
+                <div>
+                    <div style="font-size:0.7rem;color:var(--text-muted);
+                                font-weight:700;text-transform:uppercase;
+                                letter-spacing:0.5px;">To</div>
+                    <div id="modalToTime"
+                         style="font-weight:700;color:#166534;font-size:0.9rem;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background:#f8fafc;border-radius:var(--radius-md);
+                    padding:1.1rem;margin-bottom:1.25rem;border:1px solid var(--border);">
+            <div style="display:flex;gap:0.75rem;align-items:flex-start;margin-bottom:0.85rem;">
+                <span style="font-size:1.3rem;">&#128205;</span>
+                <div>
+                    <div style="font-size:0.7rem;color:var(--text-muted);font-weight:700;
+                                text-transform:uppercase;letter-spacing:0.5px;">Pickup</div>
+                    <div id="modalPickup" style="font-weight:600;font-size:0.9rem;"></div>
+                </div>
+            </div>
+            <div style="margin-left:0.75rem;border-left:2px dashed var(--primary);height:18px;"></div>
+            <div style="display:flex;gap:0.75rem;align-items:flex-start;">
+                <span style="font-size:1.3rem;">&#127937;</span>
+                <div>
+                    <div style="font-size:0.7rem;color:var(--text-muted);font-weight:700;
+                                text-transform:uppercase;letter-spacing:0.5px;">Drop</div>
+                    <div id="modalDrop" style="font-weight:600;font-size:0.9rem;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="modalSteps"
+             style="display:flex;align-items:center;
+                    justify-content:space-between;margin-bottom:1rem;"></div>
+
+        <div id="modalAlert"></div>
+    </div>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div style="max-width:1100px;margin:2rem auto;padding:0 1rem;">
+    <div style="margin-bottom:1.5rem;">
+        <h2 style="color:var(--primary);margin-bottom:0.25rem;
+                   font-weight:800;font-size:1.6rem;">My Bookings</h2>
+        <p id="welcomeMsg" style="color:var(--text-light);font-size:0.9rem;"></p>
+    </div>
+
+    <div id="loadingMsg" style="text-align:center;padding:4rem;color:var(--text-light);">
+        <div style="font-size:2.5rem;margin-bottom:1rem;">&#9203;</div>
+        Loading your bookings...
+    </div>
+
+    <div id="errorMsg" style="display:none;" class="alert alert-error"></div>
+
+    <div id="emptyMsg" style="text-align:center;padding:4rem;display:none;">
+        <div style="font-size:4rem;margin-bottom:1rem;">&#128663;</div>
+        <p style="color:var(--text-light);font-size:1.1rem;margin-bottom:1.5rem;">No bookings yet!</p>
+        <a href="cars.html" class="btn btn-accent btn-lg">Browse Cars</a>
+    </div>
+
+    <div id="bookingTable" style="display:none;">
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>ID</th><th>Car</th><th>Type</th>
+                    <th>From</th><th>To</th><th>Amount</th>
+                    <th>Driver</th><th>Status</th>
+                    <th>Payment</th><th>Action</th>
+                </tr>
+                </thead>
+                <tbody id="bookingBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+
+    if (!localStorage.getItem('token')) {
+        alert('Please login first!');
+        window.location.href = '/login.html';
+    }
+
+    var storedName = localStorage.getItem('name') || localStorage.getItem('email') || 'User';
+    document.getElementById('navUserName').textContent = '\uD83D\uDC64 ' + storedName;
+    document.getElementById('welcomeMsg').textContent  =
+        'Welcome back, ' + storedName + '! Here are your bookings.';
+
+    function toggleMobileNav() {
+        document.getElementById('mobileNav').classList.toggle('open');
+        document.getElementById('hamburger').classList.toggle('open');
+    }
+
+    function logout() { localStorage.clear(); window.location.href = '/login.html'; }
+
+    function closeTrackModal() {
+        document.getElementById('trackModal').style.display = 'none';
+    }
+
+    document.getElementById('trackModal').addEventListener('click', function(e) {
+        if (e.target === this) closeTrackModal();
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeTrackModal();
+    });
+
+    // =============================================
+    // FIX: 12-hour AM/PM time format
+    // 14:30 -> 2:30 PM  |  09:15 -> 9:15 AM
+    // =============================================
+    function to12Hour(dateStr) {
+        if (!dateStr) return '-';
+        var d       = new Date(dateStr);
+        var hours   = d.getHours();
+        var minutes = d.getMinutes();
+        var ampm    = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        if (hours === 0) hours = 12;
+        var mStr = minutes < 10 ? '0' + minutes : minutes;
+        return hours + ':' + mStr + ' ' + ampm;
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '-';
+        var d = new Date(dateStr);
+        return d.toLocaleDateString('en-IN') + '<br>'
+            + '<span style="color:var(--text-muted);font-size:0.78rem;">'
+            + to12Hour(dateStr) + '</span>';
+    }
+
+    function formatDateFull(dateStr) {
+        if (!dateStr) return '-';
+        var d = new Date(dateStr);
+        return d.toLocaleDateString('en-IN') + ' ' + to12Hour(dateStr);
+    }
+
+    // ===== LOAD BOOKINGS =====
+    async function loadBookings() {
+        var loadingEl = document.getElementById('loadingMsg');
+        var errorEl   = document.getElementById('errorMsg');
+        var emptyEl   = document.getElementById('emptyMsg');
+        var tableEl   = document.getElementById('bookingTable');
+        var bodyEl    = document.getElementById('bookingBody');
+
+        try {
+            var bookings = await getMyBookings();
+            loadingEl.style.display = 'none';
+
+            if (!bookings || bookings.length === 0) {
+                emptyEl.style.display = 'block';
+                return;
+            }
+
+            window._bookings = bookings;
+            tableEl.style.display = 'block';
+
+            var rows = '';
+            for (var i = 0; i < bookings.length; i++) {
+                var b           = bookings[i];
+                var carName     = b.car ? b.car.name : '-';
+                var statusClass = 'status-' + b.status.toLowerCase();
+                var payBg       = b.paymentStatus === 'PAID' ? '#dcfce7' : '#fef3c7';
+                var payColor    = b.paymentStatus === 'PAID' ? '#166534' : '#92400e';
+
+                var driverInfo = 'No Driver';
+                if (b.driver) {
+                    driverInfo = '<strong>' + b.driver.name + '</strong>';
+                    if (b.driver.phone) {
+                        driverInfo +=
+                            '<br><span class="phone-badge" style="margin-top:0.3rem;display:inline-flex;">'
+                            + '&#128222; ' + b.driver.phone + '</span>';
+                    }
+                }
+
+                var actionHtml =
+                    '<div style="display:flex;gap:0.4rem;flex-wrap:wrap;">'
+                    + '<button class="btn btn-primary btn-sm" onclick="openTrack(' + b.id + ')">Track</button>';
+
+                if (b.status === 'PENDING' || b.status === 'CONFIRMED') {
+                    actionHtml +=
+                        '<button class="btn btn-danger btn-sm" onclick="doCancel(' + b.id + ')">Cancel</button>';
+                }
+                actionHtml += '</div>';
+
+                rows += '<tr>'
+                    + '<td><strong>#' + b.id + '</strong></td>'
+                    + '<td>'
+                    + '<strong>' + carName + '</strong>'
+                    + (b.car && b.car.brand
+                        ? '<br><span style="font-size:0.78rem;color:var(--text-muted);">'
+                          + b.car.brand + '</span>' : '')
+                    + '</td>'
+                    + '<td><span class="badge badge-'
+                    + (b.bookingType === 'HOURLY' ? 'comfort' : 'luxury') + '">'
+                    + b.bookingType + '</span></td>'
+                    + '<td style="font-size:0.82rem;">' + formatDate(b.startDatetime) + '</td>'
+                    + '<td style="font-size:0.82rem;">' + formatDate(b.endDatetime)   + '</td>'
+                    + '<td><strong style="color:var(--primary);">&#8377;' + b.totalAmount + '</strong></td>'
+                    + '<td style="font-size:0.82rem;">' + driverInfo + '</td>'
+                    + '<td><span class="status ' + statusClass + '">' + b.status + '</span></td>'
+                    + '<td><span style="padding:0.25rem 0.6rem;border-radius:20px;'
+                    + 'font-size:0.75rem;font-weight:700;'
+                    + 'background:' + payBg + ';color:' + payColor + ';">'
+                    + b.paymentStatus + '</span></td>'
+                    + '<td>' + actionHtml + '</td>'
+                    + '</tr>';
+            }
+
+            bodyEl.innerHTML = rows;
+
+        } catch(e) {
+            loadingEl.style.display = 'none';
+            errorEl.style.display   = 'block';
+            errorEl.textContent =
+                'Error loading bookings: ' + e.message + '. Please refresh the page.';
+        }
+    }
+
+    function openTrack(bookingId) {
+        var bookings = window._bookings || [];
+        var b = null;
+        for (var i = 0; i < bookings.length; i++) {
+            if (bookings[i].id === bookingId) { b = bookings[i]; break; }
+        }
+        if (!b) { alert('Booking not found'); return; }
+        trackBooking(b);
+    }
+
+    function trackBooking(b) {
+        var status      = b.status;
+        var carName     = b.car    ? b.car.name    : 'Car';
+        var pickup      = b.pickupLocation || '';
+        var drop        = b.dropLocation   || '';
+        var driverName  = b.driver ? b.driver.name  : '';
+        var driverPhone = b.driver ? b.driver.phone : '';
+
+        var statusColor =
+            status === 'ACTIVE'    ? '#10b981' :
+            status === 'CONFIRMED' ? '#1a3c6e' :
+            status === 'COMPLETED' ? '#6b7280' : '#f59e0b';
+
+        var step1 = (status !== 'PENDING');
+        var step2 = (status === 'ACTIVE' || status === 'COMPLETED');
+        var step3 = (status === 'COMPLETED');
+
+        document.getElementById('modalTitle').textContent = 'Booking #' + b.id;
+        var statusEl = document.getElementById('modalStatus');
+        statusEl.textContent      = status;
+        statusEl.style.background = statusColor;
+
+        document.getElementById('modalCarName').textContent = carName;
+        document.getElementById('modalDriver').textContent  =
+            driverName ? '\uD83D\uDC68\u200D\u2708\uFE0F Driver: ' + driverName : 'Self Drive';
+
+        var phoneEl = document.getElementById('modalDriverPhone');
+        phoneEl.innerHTML = driverPhone
+            ? '<span class="phone-badge">&#128222; ' + driverPhone + '</span>'
+            : '';
+
+        // Show trip times in 12-hour format
+        var timesBox = document.getElementById('modalTimesBox');
+        if (b.startDatetime || b.endDatetime) {
+            timesBox.style.display = 'block';
+            document.getElementById('modalFromTime').textContent = formatDateFull(b.startDatetime);
+            document.getElementById('modalToTime').textContent   = formatDateFull(b.endDatetime);
+        } else {
+            timesBox.style.display = 'none';
+        }
+
+        document.getElementById('modalPickup').textContent = pickup || 'Not specified';
+        document.getElementById('modalDrop').textContent   = drop   || 'Not specified';
+
+        function makeStep(active, num, text) {
+            return '<div style="text-align:center;flex:1;">'
+                + '<div style="width:34px;height:34px;border-radius:50%;'
+                + 'display:flex;align-items:center;justify-content:center;'
+                + 'margin:0 auto 0.3rem;font-size:0.85rem;font-weight:700;'
+                + 'background:' + (active ? 'var(--primary)' : '#e2e8f0') + ';'
+                + 'color:' + (active ? '#fff' : '#94a3b8') + ';transition:all 0.3s;">'
+                + (active ? '&#10003;' : num) + '</div>'
+                + '<div style="font-size:0.72rem;font-weight:600;'
+                + 'color:' + (active ? 'var(--primary)' : 'var(--text-muted)') + ';">'
+                + text + '</div></div>';
+        }
+
+        function makeLine(active) {
+            return '<div style="flex:1;height:2px;background:'
+                + (active ? 'var(--primary)' : '#e2e8f0') + ';'
+                + 'margin-bottom:1.2rem;transition:all 0.3s;"></div>';
+        }
+
+        document.getElementById('modalSteps').innerHTML =
+            makeStep(true,  '1', 'Booked')
+            + makeLine(step1)
+            + makeStep(step1, '2', 'Confirmed')
+            + makeLine(step2)
+            + makeStep(step2, '3', 'On the Way')
+            + makeLine(step3)
+            + makeStep(step3, '4', 'Done');
+
+        var alertEl = document.getElementById('modalAlert');
+        if      (status === 'ACTIVE')    alertEl.innerHTML = '<div class="alert alert-success">&#128640; Your ride is in progress!</div>';
+        else if (status === 'CONFIRMED') alertEl.innerHTML = '<div class="alert alert-info">&#9203; Driver will arrive soon!</div>';
+        else if (status === 'COMPLETED') alertEl.innerHTML = '<div class="alert alert-success">&#9989; Trip completed! Thank you.</div>';
+        else                             alertEl.innerHTML = '';
+
+        document.getElementById('trackModal').style.display = 'flex';
+    }
+
+    async function doCancel(id) {
+        if (!confirm('Are you sure you want to cancel this booking?')) return;
+        try {
+            await cancelBooking(id);
+            alert('Booking cancelled successfully!');
+            loadBookings();
+        } catch(e) {
+            alert('Error cancelling: ' + e.message);
+        }
+    }
+
+    loadBookings();
+</script>
+</body>
+</html>

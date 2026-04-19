@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - DriveEasy</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .tab-content { display: none; padding: 2rem; }
+        .tab-content.active { display: block; }
+        .nav-tabs {
+            display: flex; gap: 0.5rem; padding: 1rem 2rem;
+            background: #fff; border-bottom: 2px solid #eee; flex-wrap: wrap;
+        }
+        .nav-tab {
+            padding: 0.6rem 1.2rem; border: none; background: transparent;
+            cursor: pointer; font-size: 0.9rem; font-weight: 500; color: #666;
+            border-bottom: 3px solid transparent; transition: all 0.2s;
+        }
+        .nav-tab.active { color: #1a3c6e; border-bottom: 3px solid #1a3c6e; }
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(4,1fr);
+            gap: 1.5rem; margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: #fff; border-radius: 10px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.10);
+            padding: 1.5rem; text-align: center;
+        }
+        .stat-number { font-size: 2.5rem; font-weight: 700; color: #1a3c6e; }
+        .stat-label  { color: #666; font-size: 0.9rem; margin-top: 0.3rem; }
+        .form-grid   { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .section-title {
+            font-size: 1.2rem; font-weight: 600; color: #1a3c6e;
+            margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #eee;
+        }
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            z-index: 999; display: flex; align-items: center; justify-content: center;
+        }
+        .modal-box {
+            background: #fff; border-radius: 10px; padding: 2rem;
+            width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto;
+        }
+        .leave-pending {
+            background: #fff3cd; border: 1px solid #ffc107;
+            border-radius: 8px; padding: 1rem; margin-bottom: 0.8rem;
+        }
+        /* Inline shift selector styles */
+        .shift-select-inline {
+            padding: 0.3rem 0.5rem;
+            border: 1.5px solid #c7d2fe;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-family: inherit;
+            background: #eef2ff;
+            color: #1a3c6e;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .shift-select-inline:focus {
+            border-color: #1a3c6e;
+            box-shadow: 0 0 0 3px rgba(26,60,110,0.1);
+        }
+        .btn-shift-save {
+            padding: 0.28rem 0.7rem;
+            background: #1a3c6e;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .btn-shift-save:hover { background: #2a5298; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="/" class="brand">DriveEasy Admin</a>
+    <div style="display:flex;align-items:center;gap:1rem;">
+        <span id="navAdminName" style="color:#e8a020;font-weight:600;font-size:0.95rem;"></span>
+        <a href="/">Home</a>
+        <a href="#" onclick="logout()">Logout</a>
+    </div>
+</nav>
+
+<div class="nav-tabs">
+    <button class="nav-tab active" onclick="showTab('stats',this)">Dashboard</button>
+    <button class="nav-tab" onclick="showTab('cars',this)">Cars</button>
+    <button class="nav-tab" onclick="showTab('drivers',this)">Drivers</button>
+    <button class="nav-tab" onclick="showTab('bookings',this)">Bookings</button>
+    <button class="nav-tab" onclick="showTab('leaves',this)">Leave Requests</button>
+</div>
+
+<!-- ===== STATS TAB ===== -->
+<div id="tab-stats" class="tab-content active">
+    <h2 style="color:#1a3c6e;margin-bottom:1.5rem;">Dashboard Overview</h2>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number" id="statBookings">-</div>
+            <div class="stat-label">Total Bookings</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="statActive">-</div>
+            <div class="stat-label">Active Bookings</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="statCars">-</div>
+            <div class="stat-label">Total Cars</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="statUsers">-</div>
+            <div class="stat-label">Total Users</div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== CARS TAB ===== -->
+<div id="tab-cars" class="tab-content">
+    <div class="card">
+        <div class="section-title">Add New Car</div>
+        <div class="form-grid">
+            <div class="form-group"><label>Car Name *</label><input type="text" id="c-name" placeholder="e.g. Nexon"></div>
+            <div class="form-group"><label>Brand *</label><input type="text" id="c-brand" placeholder="e.g. Tata"></div>
+            <div class="form-group">
+                <label>Car Type *</label>
+                <select id="c-type">
+                    <option value="NORMAL">Normal</option>
+                    <option value="COMFORT">Comfort</option>
+                    <option value="LUXURY">Luxury</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Seats *</label>
+                <select id="c-seats">
+                    <option value="4">4 Seats</option>
+                    <option value="5" selected>5 Seats</option>
+                    <option value="6">6 Seats</option>
+                    <option value="7">7 Seats</option>
+                    <option value="8">8 Seats</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Fuel Type *</label>
+                <select id="c-fuel">
+                    <option value="Petrol">Petrol</option>
+                    <option value="Diesel">Diesel</option>
+                    <option value="Electric">Electric</option>
+                    <option value="Hybrid">Hybrid</option>
+                    <option value="CNG">CNG</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Transmission *</label>
+                <select id="c-transmission">
+                    <option value="Manual">Manual</option>
+                    <option value="Auto">Automatic</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Rent Per Hour (&#8377;) *</label><input type="number" id="c-rph" placeholder="e.g. 300"></div>
+            <div class="form-group"><label>Rent Per Day (&#8377;) *</label><input type="number" id="c-rpd" placeholder="e.g. 2000"></div>
+            <div class="form-group"><label>RC Expiry</label><input type="date" id="c-rc"></div>
+            <div class="form-group"><label>FC Expiry</label><input type="date" id="c-fc"></div>
+            <div class="form-group"><label>Insurance Expiry</label><input type="date" id="c-ins"></div>
+            <div class="form-group"><label>Image URL</label><input type="text" id="c-image" placeholder="https://... (optional)"></div>
+            <div class="form-group">
+                <label>Is Available?</label>
+                <select id="c-available">
+                    <option value="true">Yes - Available</option>
+                    <option value="false">No - Not Available</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Is Blocked?</label>
+                <select id="c-blocked">
+                    <option value="false">No - Not Blocked</option>
+                    <option value="true">Yes - Blocked</option>
+                </select>
+            </div>
+        </div>
+        <br>
+        <div id="carErr" style="color:red;margin-bottom:0.5rem;"></div>
+        <div id="carSuccess" style="color:green;margin-bottom:0.5rem;"></div>
+        <button class="btn btn-primary" onclick="addCar()">Add Car</button>
+    </div>
+    <div class="card" style="margin-top:1.5rem;">
+        <div class="section-title">All Cars</div>
+        <div id="carTable">Loading...</div>
+    </div>
+</div>
+
+<!-- ===== DRIVERS TAB ===== -->
+<div id="tab-drivers" class="tab-content">
+    <div class="card">
+        <div class="section-title">Add New Driver</div>
+        <div class="form-grid">
+            <div class="form-group"><label>Full Name *</label><input type="text" id="d-name" placeholder="Driver full name"></div>
+            <div class="form-group"><label>Phone *</label><input type="text" id="d-phone" placeholder="10-digit phone"></div>
+            <div class="form-group"><label>Email</label><input type="email" id="d-email" placeholder="driver@email.com"></div>
+            <div class="form-group"><label>Age * (max 59)</label><input type="number" id="d-age" placeholder="Age" max="59" min="18"></div>
+            <div class="form-group"><label>License Number *</label><input type="text" id="d-lic" placeholder="TN1234567890123"></div>
+            <div class="form-group"><label>License Expiry *</label><input type="date" id="d-exp"></div>
+            <div class="form-group">
+                <label>Shift *</label>
+                <select id="d-shift">
+                    <option value="MORNING">Morning (6AM-2PM)</option>
+                    <option value="EVENING">Evening (2PM-10PM)</option>
+                    <option value="NIGHT">Night (10PM-6AM)</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Salary (&#8377;)</label><input type="number" id="d-salary" placeholder="Monthly salary"></div>
+            <div class="form-group"><label>Joined Date</label><input type="date" id="d-joined"></div>
+            <div class="form-group">
+                <label>Is Available?</label>
+                <select id="d-available">
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                </select>
+            </div>
+        </div>
+        <br>
+        <div id="driverErr" style="color:red;margin-bottom:0.5rem;"></div>
+        <div id="driverSuccess" style="color:green;margin-bottom:0.5rem;"></div>
+        <button class="btn btn-primary" onclick="addDriver()">Add Driver</button>
+    </div>
+    <div class="card" style="margin-top:1.5rem;">
+        <div class="section-title">All Drivers</div>
+        <p style="color:#555;font-size:0.875rem;margin-bottom:1rem;background:#eef2ff;padding:0.75rem 1rem;border-radius:8px;border-left:4px solid #1a3c6e;">
+            &#128161; <strong>Shift Update:</strong> Use the dropdown in the <strong>Shift</strong> column below and click <strong>Save</strong> to update any driver's shift instantly.
+        </p>
+        <div id="driverTable">Loading...</div>
+    </div>
+</div>
+
+<!-- ===== BOOKINGS TAB ===== -->
+<div id="tab-bookings" class="tab-content">
+    <div class="card">
+        <div class="section-title">All Bookings &amp; Payments</div>
+        <div id="adminBookingTable">Loading...</div>
+    </div>
+</div>
+
+<!-- ===== LEAVE REQUESTS TAB ===== -->
+<div id="tab-leaves" class="tab-content">
+    <div class="card">
+        <div class="section-title">Driver Leave Requests</div>
+        <div id="leaveList">Loading...</div>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+
+    // ===== AUTH CHECK =====
+    if (localStorage.getItem('role') !== 'ADMIN') {
+        alert('Admin access only!');
+        window.location.href = '/login.html';
+    }
+
+    var adminName = localStorage.getItem('name') || localStorage.getItem('email') || 'Admin';
+    document.getElementById('navAdminName').textContent = '\uD83D\uDC64 ' + adminName;
+
+    function logout() {
+        localStorage.clear();
+        window.location.href = '/login.html';
+    }
+
+    function showTab(tab, el) {
+        document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
+        document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
+        document.getElementById('tab-' + tab).classList.add('active');
+        el.classList.add('active');
+        if (tab === 'stats')    loadStats();
+        if (tab === 'cars')     loadAdminCars();
+        if (tab === 'drivers')  loadAdminDrivers();
+        if (tab === 'bookings') loadAdminBookings();
+        if (tab === 'leaves')   loadLeaveRequests();
+    }
+
+    // ===== STATS =====
+    async function loadStats() {
+        try {
+            var s = await adminStats();
+            document.getElementById('statBookings').textContent = s.totalBookings;
+            document.getElementById('statActive').textContent   = s.activeBookings;
+            document.getElementById('statCars').textContent     = s.totalCars;
+            document.getElementById('statUsers').textContent    = s.totalUsers;
+        } catch(e) { console.error('Stats error:', e); }
+    }
+
+    // ===== ADD CAR =====
+    async function addCar() {
+        var name  = document.getElementById('c-name').value.trim();
+        var brand = document.getElementById('c-brand').value.trim();
+        var rph   = document.getElementById('c-rph').value;
+        var rpd   = document.getElementById('c-rpd').value;
+        var errEl = document.getElementById('carErr');
+        var sucEl = document.getElementById('carSuccess');
+        if (!name || !brand || !rph || !rpd) {
+            errEl.textContent = 'Please fill Name, Brand, Rent/Hour and Rent/Day';
+            return;
+        }
+        var carData = {
+            name: name, brand: brand,
+            type:            document.getElementById('c-type').value,
+            seats:           parseInt(document.getElementById('c-seats').value),
+            fuelType:        document.getElementById('c-fuel').value,
+            transmission:    document.getElementById('c-transmission').value,
+            rentPerHour:     parseFloat(rph),
+            rentPerDay:      parseFloat(rpd),
+            rcExpiry:        document.getElementById('c-rc').value  || null,
+            fcExpiry:        document.getElementById('c-fc').value  || null,
+            insuranceExpiry: document.getElementById('c-ins').value || null,
+            imageUrl:        document.getElementById('c-image').value.trim() || null,
+            isAvailable:     document.getElementById('c-available').value === 'true',
+            isBlocked:       document.getElementById('c-blocked').value  === 'true'
+        };
+        try {
+            errEl.textContent = '';
+            await adminAddCar(carData);
+            sucEl.textContent = 'Car added successfully!';
+            ['c-name','c-brand','c-rph','c-rpd','c-rc','c-fc','c-ins','c-image'].forEach(function(id) {
+                document.getElementById(id).value = '';
+            });
+            setTimeout(function() { sucEl.textContent = ''; }, 3000);
+            loadAdminCars();
+        } catch(e) { errEl.textContent = 'Error: ' + e.message; }
+    }
+
+    // ===== LOAD CARS =====
+    async function loadAdminCars() {
+        try {
+            var cars = await adminGetCars();
+            var el   = document.getElementById('carTable');
+            if (!cars.length) { el.innerHTML = '<p>No cars added yet.</p>'; return; }
+            var rows = cars.map(function(c) {
+                return '<tr>'
+                    + '<td>' + c.id + '</td>'
+                    + '<td><strong>' + c.name + '</strong></td>'
+                    + '<td>' + (c.brand || '-') + '</td>'
+                    + '<td><span class="badge badge-' + c.type.toLowerCase() + '">' + c.type + '</span></td>'
+                    + '<td>' + c.seats + '</td>'
+                    + '<td>' + (c.fuelType || '-') + '</td>'
+                    + '<td>' + (c.transmission || '-') + '</td>'
+                    + '<td>&#8377;' + c.rentPerHour + '</td>'
+                    + '<td>&#8377;' + c.rentPerDay + '</td>'
+                    + '<td>' + (c.rcExpiry || '-') + '</td>'
+                    + '<td>' + (c.fcExpiry || '-') + '</td>'
+                    + '<td>' + (c.insuranceExpiry || '-') + '</td>'
+                    + '<td style="color:' + (c.isAvailable ? 'green' : 'red') + ';">'
+                    + (c.isAvailable ? 'Yes' : 'No') + '</td>'
+                    + '<td style="color:' + (c.isBlocked ? 'red' : 'green') + ';">'
+                    + (c.isBlocked ? 'Yes' : 'No') + '</td>'
+                    + '<td style="font-size:0.8rem;white-space:nowrap;">'
+                    + '&#127749; ' + (c.morningDriver ? c.morningDriver.name : '<span style="color:#999;">None</span>') + '<br>'
+                    + '&#127748; ' + (c.eveningDriver ? c.eveningDriver.name : '<span style="color:#999;">None</span>') + '<br>'
+                    + '&#127769; ' + (c.nightDriver   ? c.nightDriver.name   : '<span style="color:#999;">None</span>')
+                    + '</td>'
+                    + '<td>'
+                    + '<button class="btn btn-primary" style="padding:0.3rem 0.6rem;font-size:0.78rem;margin-bottom:0.3rem;display:block;width:100%;" '
+                    + 'onclick="showAssignDriver(' + c.id + ',\'' + c.name + '\')">Assign Drivers</button>'
+                    + '<button class="btn btn-danger" style="padding:0.3rem 0.6rem;font-size:0.78rem;display:block;width:100%;" '
+                    + 'onclick="deleteCar(' + c.id + ')">Delete</button>'
+                    + '</td>'
+                    + '</tr>';
+            }).join('');
+            el.innerHTML =
+                '<div style="overflow-x:auto;">'
+                + '<table class="table"><thead><tr>'
+                + '<th>ID</th><th>Name</th><th>Brand</th><th>Type</th><th>Seats</th>'
+                + '<th>Fuel</th><th>Trans.</th><th>&#8377;/Hr</th><th>&#8377;/Day</th>'
+                + '<th>RC Expiry</th><th>FC Expiry</th><th>Insurance</th>'
+                + '<th>Available</th><th>Blocked</th><th>Assigned Drivers</th><th>Actions</th>'
+                + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+        } catch(e) {
+            document.getElementById('carTable').innerHTML = '<p style="color:red">Error: ' + e.message + '</p>';
+        }
+    }
+
+    // ===== ASSIGN DRIVER MODAL =====
+    async function showAssignDriver(carId, carName) {
+        try {
+            var drivers = await adminGetDrivers();
+            var allCars = await adminGetCars();
+
+            var assignedIds = new Set();
+            allCars.forEach(function(c) {
+                if (c.morningDriver) assignedIds.add(c.morningDriver.id);
+                if (c.eveningDriver) assignedIds.add(c.eveningDriver.id);
+                if (c.nightDriver)   assignedIds.add(c.nightDriver.id);
+            });
+
+            var currentCar     = allCars.find(function(c) { return c.id === carId; });
+            var currentMorning = currentCar && currentCar.morningDriver ? currentCar.morningDriver.id : null;
+            var currentEvening = currentCar && currentCar.eveningDriver ? currentCar.eveningDriver.id : null;
+            var currentNight   = currentCar && currentCar.nightDriver   ? currentCar.nightDriver.id   : null;
+
+            var freeDriver = function(shift) {
+                return drivers.filter(function(d) {
+                    return d.shift === shift && !d.isBlocked
+                        && (!assignedIds.has(d.id) || d.id === currentMorning || d.id === currentEvening || d.id === currentNight);
+                });
+            };
+
+            var mkOpts = function(list, currentId) {
+                return '<option value="">-- None --</option>'
+                    + list.map(function(d) {
+                        return '<option value="' + d.id + '"' + (d.id === currentId ? ' selected' : '') + '>'
+                            + d.name + ' (' + d.phone + ')' + (d.isOnLeaveToday ? ' (On Leave)' : '')
+                            + '</option>';
+                    }).join('');
+            };
+
+            var modal = document.createElement('div');
+            modal.id        = 'assignModal';
+            modal.className = 'modal-overlay';
+            modal.innerHTML =
+                '<div class="modal-box">'
+                + '<h3 style="color:#1a3c6e;margin-bottom:0.5rem;">Assign Drivers — ' + carName + '</h3>'
+                + '<p style="color:#666;font-size:0.85rem;margin-bottom:1.5rem;">Only free drivers (not assigned to other cars) are shown.</p>'
+                + '<div class="form-group"><label>&#127749; Morning Driver (6AM–2PM)</label>'
+                + '<select id="am-morning" style="width:100%;padding:0.6rem;border:1px solid #ddd;border-radius:6px;">'
+                + mkOpts(freeDriver('MORNING'), currentMorning) + '</select></div>'
+                + '<div class="form-group"><label>&#127748; Evening Driver (2PM–10PM)</label>'
+                + '<select id="am-evening" style="width:100%;padding:0.6rem;border:1px solid #ddd;border-radius:6px;">'
+                + mkOpts(freeDriver('EVENING'), currentEvening) + '</select></div>'
+                + '<div class="form-group"><label>&#127769; Night Driver (10PM–6AM)</label>'
+                + '<select id="am-night" style="width:100%;padding:0.6rem;border:1px solid #ddd;border-radius:6px;">'
+                + mkOpts(freeDriver('NIGHT'), currentNight) + '</select></div>'
+                + '<div id="assignMsg" style="margin-bottom:0.8rem;font-size:0.9rem;min-height:1.2rem;"></div>'
+                + '<div style="display:flex;gap:1rem;">'
+                + '<button class="btn btn-primary" style="flex:1;padding:0.8rem;" onclick="saveAssignment(' + carId + ')">Save</button>'
+                + '<button class="btn" style="flex:1;padding:0.8rem;border:1px solid #ddd;" onclick="closeModal(\'assignModal\')">Cancel</button>'
+                + '</div></div>';
+            document.body.appendChild(modal);
+        } catch(e) { alert('Error: ' + e.message); }
+    }
+
+    async function saveAssignment(carId) {
+        var msgEl  = document.getElementById('assignMsg');
+        var shifts = [
+            { shift: 'MORNING', val: document.getElementById('am-morning').value },
+            { shift: 'EVENING', val: document.getElementById('am-evening').value },
+            { shift: 'NIGHT',   val: document.getElementById('am-night').value }
+        ];
+        try {
+            msgEl.style.color = 'blue'; msgEl.textContent = 'Saving...';
+            for (var i = 0; i < shifts.length; i++) {
+                await apiFetch('/admin/cars/' + carId + '/assign-driver', {
+                    method: 'PUT',
+                    body: JSON.stringify({ shift: shifts[i].shift, driverId: shifts[i].val || null })
+                });
+            }
+            msgEl.style.color = 'green'; msgEl.textContent = 'Drivers assigned successfully!';
+            setTimeout(function() { closeModal('assignModal'); loadAdminCars(); }, 1500);
+        } catch(e) { msgEl.style.color = 'red'; msgEl.textContent = 'Error: ' + e.message; }
+    }
+
+    function closeModal(id) { var m = document.getElementById(id); if (m) m.remove(); }
+
+    async function deleteCar(id) {
+        if (!confirm('Delete this car?')) return;
+        try { await adminDeleteCar(id); alert('Car deleted!'); loadAdminCars(); }
+        catch(e) { alert('Error: ' + e.message); }
+    }
+
+    // ===== ADD DRIVER =====
+    async function addDriver() {
+        var name  = document.getElementById('d-name').value.trim();
+        var phone = document.getElementById('d-phone').value.trim();
+        var age   = parseInt(document.getElementById('d-age').value);
+        var lic   = document.getElementById('d-lic').value.trim();
+        var exp   = document.getElementById('d-exp').value;
+        var errEl = document.getElementById('driverErr');
+        var sucEl = document.getElementById('driverSuccess');
+        if (!name || !phone || !age || !lic || !exp) {
+            errEl.textContent = 'Please fill all required fields'; return;
+        }
+        if (age >= 60) { errEl.textContent = 'Driver age must be less than 60!'; return; }
+        var driverData = {
+            name: name, phone: phone,
+            email:         document.getElementById('d-email').value || null,
+            age:           age,
+            licenseNumber: lic,
+            licenseExpiry: exp,
+            shift:         document.getElementById('d-shift').value,
+            salary:        parseFloat(document.getElementById('d-salary').value) || null,
+            joinedDate:    document.getElementById('d-joined').value || null,
+            isAvailable:   document.getElementById('d-available').value === 'true',
+            isBlocked: false, onLeave: false, yearsOfService: 0
+        };
+        try {
+            errEl.textContent = '';
+            await adminAddDriver(driverData);
+            sucEl.textContent = 'Driver added successfully!';
+            setTimeout(function() { sucEl.textContent = ''; }, 3000);
+            loadAdminDrivers();
+        } catch(e) { errEl.textContent = 'Error: ' + e.message; }
+    }
+
+    // ===== LOAD DRIVERS — with inline shift editor =====
+    async function loadAdminDrivers() {
+        try {
+            var drivers = await adminGetDrivers();
+            var el      = document.getElementById('driverTable');
+            if (!drivers.length) { el.innerHTML = '<p>No drivers added yet.</p>'; return; }
+
+            var rows = drivers.map(function(d) {
+                var leaveBg =
+                    d.leaveStatus === 'PENDING'  ? '#fff3cd' :
+                    d.leaveStatus === 'APPROVED' ? '#d4edda' :
+                    d.leaveStatus === 'REJECTED' ? '#f8d7da' : '#eee';
+                var leaveColor =
+                    d.leaveStatus === 'PENDING'  ? '#856404' :
+                    d.leaveStatus === 'APPROVED' ? '#155724' :
+                    d.leaveStatus === 'REJECTED' ? '#721c24' : '#666';
+
+                // Inline shift editor
+                var shiftCell =
+                    '<div style="display:flex;gap:0.4rem;align-items:center;">'
+                    + '<select id="shift-' + d.id + '" class="shift-select-inline">'
+                    + '<option value="MORNING"' + (d.shift === 'MORNING' ? ' selected' : '') + '>&#127749; Morning</option>'
+                    + '<option value="EVENING"' + (d.shift === 'EVENING' ? ' selected' : '') + '>&#127748; Evening</option>'
+                    + '<option value="NIGHT"'   + (d.shift === 'NIGHT'   ? ' selected' : '') + '>&#127769; Night</option>'
+                    + '</select>'
+                    + '<button class="btn-shift-save" id="shiftbtn-' + d.id + '" onclick="updateDriverShift(' + d.id + ')">Save</button>'
+                    + '</div>';
+
+                return '<tr>'
+                    + '<td>' + d.id + '</td>'
+                    + '<td><strong>' + d.name + '</strong></td>'
+                    + '<td>' + d.phone + '</td>'
+                    + '<td>' + d.age + '</td>'
+                    + '<td>' + d.licenseNumber + '</td>'
+                    + '<td>' + d.licenseExpiry + '</td>'
+                    + '<td>' + shiftCell + '</td>'
+                    + '<td>' + (d.salary ? '&#8377;' + d.salary : '-') + '</td>'
+                    + '<td style="color:' + (d.isAvailable ? 'green' : 'red') + ';">'
+                    + (d.isAvailable ? 'Yes' : 'No') + '</td>'
+                    + '<td style="color:' + (d.isBlocked ? 'red' : 'green') + ';">'
+                    + (d.isBlocked ? 'Yes' : 'No') + '</td>'
+                    + '<td><span style="font-size:0.8rem;padding:0.2rem 0.5rem;border-radius:4px;'
+                    + 'background:' + leaveBg + ';color:' + leaveColor + ';">'
+                    + (d.leaveStatus || 'NONE') + '</span></td>'
+                    + '<td><button class="btn btn-danger" style="padding:0.3rem 0.6rem;font-size:0.78rem;" '
+                    + 'onclick="deleteDriver(' + d.id + ')">Delete</button></td>'
+                    + '</tr>';
+            }).join('');
+
+            el.innerHTML =
+                '<div style="overflow-x:auto;">'
+                + '<table class="table"><thead><tr>'
+                + '<th>ID</th><th>Name</th><th>Phone</th><th>Age</th>'
+                + '<th>License No.</th><th>Expiry</th>'
+                + '<th>Shift (Editable)</th>'
+                + '<th>Salary</th><th>Available</th><th>Blocked</th>'
+                + '<th>Leave Status</th><th>Action</th>'
+                + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+        } catch(e) {
+            document.getElementById('driverTable').innerHTML = '<p style="color:red">Error: ' + e.message + '</p>';
+        }
+    }
+
+    // =============================================
+    // RESTORED FEATURE: Update Driver Shift
+    // =============================================
+    async function updateDriverShift(driverId) {
+        var selectEl = document.getElementById('shift-' + driverId);
+        var btnEl    = document.getElementById('shiftbtn-' + driverId);
+        if (!selectEl) return;
+        var newShift = selectEl.value;
+
+        try {
+            btnEl.textContent      = '...';
+            btnEl.style.background = '#64748b';
+            var res  = await fetch('/api/admin/drivers/' + driverId + '/shift', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type':  'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('token')
+                },
+                body: JSON.stringify({ shift: newShift })
+            });
+            var data = await res.json();
+            if (res.ok) {
+                btnEl.textContent      = 'Saved!';
+                btnEl.style.background = '#16a34a';
+                setTimeout(function() {
+                    loadAdminDrivers();
+                }, 1200);
+            } else {
+                btnEl.textContent      = 'Error';
+                btnEl.style.background = '#dc2626';
+                alert('Error: ' + (data.message || 'Could not update shift'));
+                setTimeout(function() { btnEl.textContent = 'Save'; btnEl.style.background = ''; }, 2000);
+            }
+        } catch(e) {
+            alert('Error updating shift: ' + e.message);
+            btnEl.textContent      = 'Save';
+            btnEl.style.background = '';
+        }
+    }
+
+    async function deleteDriver(id) {
+        if (!confirm('Delete this driver?')) return;
+        try { await adminDeleteDriver(id); alert('Driver deleted!'); loadAdminDrivers(); }
+        catch(e) { alert('Error: ' + e.message); }
+    }
+
+    // ===== LOAD BOOKINGS =====
+    async function loadAdminBookings() {
+        try {
+            var bookings = await adminGetBookings();
+            var el       = document.getElementById('adminBookingTable');
+            if (!bookings.length) { el.innerHTML = '<p>No bookings yet.</p>'; return; }
+
+            var totalRevenue = bookings
+                .filter(function(b) { return b.paymentStatus === 'PAID'; })
+                .reduce(function(s, b) { return s + b.totalAmount; }, 0);
+            var paidCount    = bookings.filter(function(b) { return b.paymentStatus === 'PAID'; }).length;
+            var pendingCount = bookings.filter(function(b) {
+                return b.paymentStatus !== 'PAID' && b.status !== 'CANCELLED';
+            }).length;
+
+            var rows = bookings.map(function(b) {
+                var payBg    = b.paymentStatus === 'PAID' ? '#d4edda' : '#fff3cd';
+                var payColor = b.paymentStatus === 'PAID' ? '#155724' : '#856404';
+                return '<tr>'
+                    + '<td>#' + b.id + '</td>'
+                    + '<td>' + (b.user   ? b.user.name   : '-') + '</td>'
+                    + '<td>' + (b.car    ? b.car.name    : '-') + '</td>'
+                    + '<td>' + (b.driver ? b.driver.name : 'No Driver') + '</td>'
+                    + '<td>' + b.bookingType + '</td>'
+                    + '<td style="font-size:0.82rem;">' + fmtDateTime(b.startDatetime) + '</td>'
+                    + '<td style="font-size:0.82rem;">' + fmtDateTime(b.endDatetime)   + '</td>'
+                    + '<td><strong>&#8377;' + b.totalAmount + '</strong></td>'
+                    + '<td><span class="status status-' + b.status.toLowerCase() + '">' + b.status + '</span></td>'
+                    + '<td><span style="padding:0.2rem 0.6rem;border-radius:4px;font-size:0.8rem;font-weight:600;'
+                    + 'background:' + payBg + ';color:' + payColor + ';">' + b.paymentStatus + '</span></td>'
+                    + '<td><select onchange="adminUpdateBooking(' + b.id + ',this.value)" '
+                    + 'style="font-size:0.8rem;padding:0.3rem;border:1px solid #ddd;border-radius:4px;">'
+                    + '<option value="">-- Update --</option>'
+                    + '<option value="BOOKING_CONFIRMED">Confirmed</option>'
+                    + '<option value="BOOKING_CANCELLED">Cancelled</option>'
+                    + '<option value="BOOKING_COMPLETED">Completed</option>'
+                    + '<option value="PAYMENT_PAID">Payment: Paid</option>'
+                    + '<option value="PAYMENT_REFUNDED">Payment: Refunded</option>'
+                    + '</select></td>'
+                    + '</tr>';
+            }).join('');
+
+            el.innerHTML =
+                '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1.5rem;">'
+                + '<div style="background:#d4edda;border-radius:10px;padding:1.2rem;text-align:center;">'
+                + '<div style="font-size:1.8rem;font-weight:700;color:#155724;">&#8377;' + totalRevenue + '</div>'
+                + '<div style="color:#155724;">Revenue Collected</div></div>'
+                + '<div style="background:#d1ecf1;border-radius:10px;padding:1.2rem;text-align:center;">'
+                + '<div style="font-size:1.8rem;font-weight:700;color:#0c5460;">' + paidCount + '</div>'
+                + '<div style="color:#0c5460;">Payments Received</div></div>'
+                + '<div style="background:#fff3cd;border-radius:10px;padding:1.2rem;text-align:center;">'
+                + '<div style="font-size:1.8rem;font-weight:700;color:#856404;">' + pendingCount + '</div>'
+                + '<div style="color:#856404;">Payments Pending</div></div></div>'
+                + '<div style="overflow-x:auto;">'
+                + '<table class="table"><thead><tr>'
+                + '<th>ID</th><th>Customer</th><th>Car</th><th>Driver</th><th>Type</th>'
+                + '<th>From</th><th>To</th><th>Amount</th>'
+                + '<th>Booking Status</th><th>Payment</th><th>Update</th>'
+                + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+        } catch(e) {
+            document.getElementById('adminBookingTable').innerHTML = '<p style="color:red">Error: ' + e.message + '</p>';
+        }
+    }
+
+    async function adminUpdateBooking(id, value) {
+        if (!value) return;
+        try {
+            var body = {};
+            if (value.startsWith('BOOKING_')) body.status        = value.replace('BOOKING_', '');
+            else                               body.paymentStatus = value.replace('PAYMENT_', '');
+            await apiFetch('/admin/bookings/' + id + '/status', { method: 'PUT', body: JSON.stringify(body) });
+            alert('Updated successfully!');
+            loadAdminBookings();
+        } catch(e) { alert('Error: ' + e.message); }
+    }
+
+    // ===== LEAVE REQUESTS =====
+    async function loadLeaveRequests() {
+        var el = document.getElementById('leaveList');
+        try {
+            var drivers = await adminGetDrivers();
+            var pending = drivers.filter(function(d) { return d.leaveStatus === 'PENDING'; });
+            if (!pending.length) {
+                el.innerHTML =
+                    '<div style="text-align:center;padding:3rem;">'
+                    + '<p style="font-size:2rem;">&#10003;</p>'
+                    + '<p style="color:#666;margin-top:0.5rem;">No pending leave requests</p></div>';
+                return;
+            }
+            el.innerHTML = pending.map(function(d) {
+                return '<div class="leave-pending">'
+                    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;">'
+                    + '<div>'
+                    + '<div style="font-weight:600;font-size:1rem;color:#1a3c6e;">&#128100; ' + d.name + '</div>'
+                    + '<div style="font-size:0.85rem;color:#666;margin-top:0.3rem;">Phone: ' + d.phone + ' | Shift: ' + d.shift + '</div>'
+                    + '<div style="font-size:0.9rem;margin-top:0.5rem;">&#128197; Leave: '
+                    + (d.requestedLeaveStart || '-') + ' to ' + (d.requestedLeaveEnd || '-') + '</div>'
+                    + '<div style="font-size:0.9rem;margin-top:0.3rem;color:#444;">&#128221; Reason: '
+                    + (d.leaveReason || 'No reason') + '</div>'
+                    + '</div>'
+                    + '<div style="display:flex;gap:0.8rem;flex-wrap:wrap;">'
+                    + '<button class="btn btn-primary" style="padding:0.5rem 1.2rem;" onclick="handleLeave(' + d.id + ',\'APPROVE\')">&#10003; Approve</button>'
+                    + '<button class="btn btn-danger"  style="padding:0.5rem 1.2rem;" onclick="handleLeave(' + d.id + ',\'REJECT\')">&#10007; Reject</button>'
+                    + '</div></div></div>';
+            }).join('');
+        } catch(e) {
+            el.innerHTML = '<p style="color:red;">Error: ' + e.message + '</p>';
+        }
+    }
+
+    async function handleLeave(id, action) {
+        if (!confirm(action === 'APPROVE' ? 'Approve this leave?' : 'Reject this leave?')) return;
+        try {
+            var res  = await fetch('/api/admin/drivers/' + id + '/leave', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type':  'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('token')
+                },
+                body: JSON.stringify({ action: action })
+            });
+            var data = await res.json();
+            alert(data.message || (action === 'APPROVE' ? 'Leave approved!' : 'Leave rejected!'));
+            loadLeaveRequests();
+        } catch(e) { alert('Error: ' + e.message); }
+    }
+
+    // =============================================
+    // HELPER: 12-hour AM/PM format
+    // =============================================
+    function fmtDateTime(dateStr) {
+        if (!dateStr) return '-';
+        var d       = new Date(dateStr);
+        var date    = d.toLocaleDateString('en-IN');
+        var hours   = d.getHours();
+        var minutes = d.getMinutes();
+        var ampm    = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        if (hours === 0) hours = 12;
+        var mStr = minutes < 10 ? '0' + minutes : minutes;
+        return date + '<br><span style="font-size:0.78rem;color:#666;">' + hours + ':' + mStr + ' ' + ampm + '</span>';
+    }
+
+    loadStats();
+</script>
+</body>
+</html>

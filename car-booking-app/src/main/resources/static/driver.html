@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Driver Panel - DriveEasy</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<nav>
+  <a href="/" class="brand">&#128663; DriveEasy</a>
+  <div class="nav-links">
+    <span id="navDriverName"
+          style="color:var(--accent);font-weight:600;font-size:0.875rem;display:none;"></span>
+    <a href="/">Home</a>
+    <a href="cars.html">Cars</a>
+  </div>
+  <div class="hamburger" id="hamburger" onclick="toggleMobileNav()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<div class="mobile-nav" id="mobileNav">
+  <a href="/">&#127968; Home</a>
+  <a href="cars.html">&#128663; Cars</a>
+</div>
+
+<!-- ===== DRIVER LOGIN ===== -->
+<div style="max-width:420px;margin:3rem auto;padding:0 1rem;" id="loginSection">
+  <div class="card">
+    <div style="text-align:center;margin-bottom:1.5rem;">
+      <div style="font-size:3rem;margin-bottom:0.5rem;">&#128104;&#8205;&#9992;&#65039;</div>
+      <h2 style="color:var(--primary);font-weight:800;">Driver Login</h2>
+      <p style="color:var(--text-light);font-size:0.875rem;margin-top:0.3rem;">
+        Login with your Driver ID and Phone
+      </p>
+    </div>
+    <div class="form-group">
+      <label>Driver ID</label>
+      <input type="number" id="driverId" placeholder="Enter your Driver ID">
+    </div>
+    <div class="form-group">
+      <label>Phone Number</label>
+      <input type="text" id="driverPhone" placeholder="Registered phone number">
+    </div>
+    <div id="loginErr"
+         style="margin-bottom:0.8rem;font-size:0.875rem;text-align:center;
+                min-height:1.2rem;font-weight:500;"></div>
+    <button class="btn btn-primary" style="width:100%;padding:0.85rem;"
+            onclick="driverLogin()">Login &#8594;</button>
+    <p style="text-align:center;font-size:0.8rem;color:var(--text-muted);margin-top:1.25rem;">
+      Contact admin if you forgot your Driver ID
+    </p>
+  </div>
+</div>
+
+<!-- ===== DRIVER PANEL ===== -->
+<div id="driverPanel" style="display:none;">
+
+  <!-- Info Bar -->
+  <div style="background:linear-gradient(135deg,var(--primary-dark),var(--primary));
+       color:#fff;padding:1.5rem 2rem;display:flex;align-items:center;
+       justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <div style="width:52px;height:52px;border-radius:50%;
+           background:rgba(255,255,255,0.15);display:flex;
+           align-items:center;justify-content:center;font-size:1.5rem;">
+        &#128104;&#8205;&#9992;&#65039;
+      </div>
+      <div>
+        <div style="font-size:1.15rem;font-weight:700;" id="driverNameBar">Driver</div>
+        <div style="font-size:0.82rem;opacity:0.8;margin-top:0.15rem;" id="driverSubBar"></div>
+      </div>
+    </div>
+    <button class="btn"
+            style="background:rgba(255,255,255,0.15);color:#fff;
+                   border:1px solid rgba(255,255,255,0.3);padding:0.5rem 1.25rem;"
+            onclick="driverLogout()">Logout</button>
+  </div>
+
+  <div style="max-width:1100px;margin:2rem auto;padding:0 1rem;">
+
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showDriverTab('pending',this)">
+        Pending Payments
+        <span id="pendingCount"
+              style="background:var(--danger);color:#fff;border-radius:12px;
+                     padding:0.1rem 0.5rem;font-size:0.72rem;margin-left:0.3rem;
+                     display:none;"></span>
+      </button>
+      <button class="nav-tab" onclick="showDriverTab('all',this)">All Bookings</button>
+      <button class="nav-tab" onclick="showDriverTab('leave',this)">Apply Leave</button>
+    </div>
+
+    <div id="driverTab-pending">
+      <div id="pendingList">
+        <p style="color:var(--text-light);padding:2rem;text-align:center;">Loading...</p>
+      </div>
+    </div>
+
+    <div id="driverTab-all" style="display:none;">
+      <div id="allBookingsList">
+        <p style="color:var(--text-light);padding:2rem;text-align:center;">Loading...</p>
+      </div>
+    </div>
+
+    <div id="driverTab-leave" style="display:none;">
+      <div id="currentLeaveStatus" style="margin-bottom:1.5rem;"></div>
+      <div class="card" id="leaveForm">
+        <h3 style="color:var(--primary);margin-bottom:1.5rem;font-weight:700;">Apply for Leave</h3>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Leave Start Date</label>
+            <input type="date" id="leaveStart">
+          </div>
+          <div class="form-group">
+            <label>Leave End Date</label>
+            <input type="date" id="leaveEnd">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Reason</label>
+          <textarea id="leaveReason" rows="3"
+                    placeholder="Reason for leave..."
+                    style="resize:vertical;"></textarea>
+        </div>
+        <div id="leaveErr"
+             style="color:var(--danger);margin-bottom:0.8rem;
+                    font-size:0.875rem;min-height:1.2rem;"></div>
+        <div id="leaveSuccess"
+             style="color:var(--success);margin-bottom:0.8rem;
+                    font-size:0.875rem;min-height:1.2rem;"></div>
+        <button class="btn btn-primary" style="width:100%;padding:0.85rem;"
+                onclick="applyLeave()">Submit Leave Request</button>
+        <p style="font-size:0.8rem;color:var(--text-muted);text-align:center;margin-top:1rem;">
+          Your request will be reviewed by admin.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+
+  var currentDriver = null;
+
+  function toggleMobileNav() {
+    document.getElementById('mobileNav').classList.toggle('open');
+    document.getElementById('hamburger').classList.toggle('open');
+  }
+
+  // =============================================
+  // FIX: 12-hour AM/PM time formatter
+  // e.g. 14:30 -> 2:30 PM  |  09:15 -> 9:15 AM
+  // =============================================
+  function fmtDateTime(dateStr) {
+    if (!dateStr) return '-';
+    var d       = new Date(dateStr);
+    var date    = d.toLocaleDateString('en-IN');
+    var hours   = d.getHours();
+    var minutes = d.getMinutes();
+    var ampm    = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    if (hours === 0) hours = 12;
+    var mStr = minutes < 10 ? '0' + minutes : minutes;
+    return date + ' ' + hours + ':' + mStr + ' ' + ampm;
+  }
+
+  // ===== LOGIN =====
+  function driverLogin() {
+    var driverId = document.getElementById('driverId').value.trim();
+    var phone    = document.getElementById('driverPhone').value.trim();
+    var errEl    = document.getElementById('loginErr');
+
+    if (!driverId || !phone) {
+      errEl.style.color = 'var(--danger)';
+      errEl.textContent = 'Please enter Driver ID and Phone';
+      return;
+    }
+
+    errEl.style.color = 'var(--info)';
+    errEl.textContent = 'Verifying...';
+
+    fetch('/api/driver/verify?driverId=' + driverId + '&phone=' + phone)
+    .then(function(res) {
+      if (res.status === 404) { errEl.style.color = 'var(--danger)'; errEl.textContent = 'Driver ID not found. Contact admin.'; return null; }
+      if (res.status === 401) { errEl.style.color = 'var(--danger)'; errEl.textContent = 'Wrong phone number. Try again.'; return null; }
+      if (res.status === 403) { errEl.style.color = 'var(--danger)'; errEl.textContent = 'Account is blocked. Contact admin.'; return null; }
+      if (!res.ok)             { errEl.style.color = 'var(--danger)'; errEl.textContent = 'Login failed.'; return null; }
+      return res.json();
+    })
+    .then(function(driver) {
+      if (!driver) return;
+      currentDriver = driver;
+      localStorage.setItem('driverId',    driver.id);
+      localStorage.setItem('driverName',  driver.name);
+      localStorage.setItem('driverPhone', driver.phone);
+      localStorage.setItem('driverShift', driver.shift);
+      errEl.textContent = '';
+      showDriverPanel(driver);
+      loadDriverBookings();
+    })
+    .catch(function(err) {
+      errEl.style.color = 'var(--danger)';
+      errEl.textContent = 'Connection error: ' + err.message;
+    });
+  }
+
+  function showDriverPanel(driver) {
+    document.getElementById('loginSection').style.display = 'none';
+    document.getElementById('driverPanel').style.display  = 'block';
+    document.getElementById('driverNameBar').textContent  =
+        'Welcome, ' + driver.name + '!';
+    document.getElementById('driverSubBar').textContent   =
+        driver.shift + ' Shift  \u00B7  ID: ' + driver.id + '  \u00B7  ' + driver.phone;
+    var navEl = document.getElementById('navDriverName');
+    navEl.textContent   = '\uD83D\uDC64 ' + driver.name;
+    navEl.style.display = 'inline';
+  }
+
+  function driverLogout() {
+    localStorage.removeItem('driverId');
+    localStorage.removeItem('driverName');
+    localStorage.removeItem('driverPhone');
+    localStorage.removeItem('driverShift');
+    currentDriver = null;
+    document.getElementById('loginSection').style.display  = 'block';
+    document.getElementById('driverPanel').style.display   = 'none';
+    document.getElementById('navDriverName').style.display = 'none';
+    document.getElementById('driverId').value    = '';
+    document.getElementById('driverPhone').value = '';
+    document.getElementById('loginErr').textContent = '';
+  }
+
+  function showDriverTab(tab, el) {
+    document.querySelectorAll('.nav-tab').forEach(function(b) { b.classList.remove('active'); });
+    el.classList.add('active');
+    ['pending', 'all', 'leave'].forEach(function(t) {
+      var tabEl = document.getElementById('driverTab-' + t);
+      if (tabEl) tabEl.style.display = (t === tab) ? 'block' : 'none';
+    });
+    if (tab === 'leave') loadLeaveStatus();
+  }
+
+  function loadDriverBookings() {
+    var driverId = localStorage.getItem('driverId');
+    fetch('/api/driver/' + driverId + '/bookings')
+    .then(function(res) {
+      if (!res.ok) throw new Error('Failed to load');
+      return res.json();
+    })
+    .then(function(bookings) {
+      var pending = bookings.filter(function(b) {
+        return b.paymentStatus !== 'PAID' && b.status !== 'CANCELLED';
+      });
+      var countEl = document.getElementById('pendingCount');
+      if (pending.length > 0) {
+        countEl.textContent   = pending.length;
+        countEl.style.display = 'inline';
+      } else {
+        countEl.style.display = 'none';
+      }
+      renderPendingList(pending);
+      renderAllList(bookings);
+    })
+    .catch(function(err) {
+      document.getElementById('pendingList').innerHTML =
+        '<div class="alert alert-error">Error: ' + err.message + '</div>';
+    });
+  }
+
+  function renderPendingList(bookings) {
+    var el = document.getElementById('pendingList');
+    if (!bookings.length) {
+      el.innerHTML =
+        '<div style="text-align:center;padding:3rem;">'
+        + '<p style="font-size:3rem;">&#9989;</p>'
+        + '<p style="font-size:1.1rem;font-weight:700;color:var(--success);margin-top:0.5rem;">'
+        + 'All payments collected!</p>'
+        + '<p style="color:var(--text-light);margin-top:0.3rem;">No pending payments.</p></div>';
+      return;
+    }
+    var html = '<div class="alert alert-warning">You have ' + bookings.length + ' pending payment(s).</div>';
+    bookings.forEach(function(b) { html += buildCard(b); });
+    el.innerHTML = html;
+  }
+
+  function renderAllList(bookings) {
+    var el = document.getElementById('allBookingsList');
+    if (!bookings.length) {
+      el.innerHTML =
+        '<div style="text-align:center;padding:3rem;">'
+        + '<p style="font-size:3rem;">&#128203;</p>'
+        + '<p style="color:var(--text-light);margin-top:0.5rem;">No bookings assigned yet.</p></div>';
+      return;
+    }
+    var html = '';
+    bookings.forEach(function(b) { html += buildCard(b); });
+    el.innerHTML = html;
+  }
+
+  function buildCard(b) {
+    var isPaid      = (b.paymentStatus === 'PAID');
+    var isCancelled = (b.status === 'CANCELLED');
+    var isCompleted = (b.status === 'COMPLETED');
+    var isActive    = (b.status === 'ACTIVE');
+    var isConfirmed = (b.status === 'CONFIRMED');
+    var cardClass   = isPaid ? 'paid' : isCancelled ? 'cancelled' : '';
+
+    var userPhone = '';
+    if (b.user && b.user.phone) {
+      userPhone = '<span class="phone-badge" style="margin-top:0.3rem;">&#128222; ' + b.user.phone + '</span>';
+    }
+
+    var html =
+      '<div class="booking-card ' + cardClass + '">'
+      + '<div class="booking-header">'
+      + '<div class="booking-id">Booking #' + b.id + '</div>'
+      + '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">'
+      + '<span class="' + (isPaid ? 'status status-completed' : 'status status-pending') + '">'
+      + b.paymentStatus + '</span>'
+      + '<span class="status status-' + b.status.toLowerCase() + '">' + b.status + '</span>'
+      + '</div></div>'
+      + '<div class="booking-details">'
+      + '<div class="detail-item"><label>Customer</label>'
+      + '<span>' + (b.user ? b.user.name : '-') + '</span>' + userPhone + '</div>'
+      + '<div class="detail-item"><label>Car</label>'
+      + '<span>' + (b.car ? b.car.name + (b.car.brand ? ' (' + b.car.brand + ')' : '') : '-') + '</span></div>'
+      + '<div class="detail-item"><label>Booking Type</label><span>' + b.bookingType + '</span></div>'
+      + '<div class="detail-item"><label>Amount</label>'
+      + '<span style="color:var(--primary);font-size:1.1rem;font-weight:800;">&#8377;' + b.totalAmount + '</span></div>'
+      + '<div class="detail-item"><label>From</label><span>' + fmtDateTime(b.startDatetime) + '</span></div>'
+      + '<div class="detail-item"><label>To</label><span>'   + fmtDateTime(b.endDatetime)   + '</span></div>'
+      + '<div class="detail-item"><label>Pickup</label><span>' + (b.pickupLocation || '-') + '</span></div>'
+      + '<div class="detail-item"><label>Drop</label><span>'   + (b.dropLocation   || '-') + '</span></div>'
+      + '</div>';
+
+    if (!isCancelled && !isCompleted) {
+      html += '<div style="display:flex;gap:0.75rem;flex-wrap:wrap;">';
+      if (!isPaid) {
+        html += '<button class="btn btn-accent" style="padding:0.5rem 1.5rem;" '
+            + 'onclick="markPaid(' + b.id + ')">Mark as Paid</button>';
+      } else {
+        html += '<span class="btn" style="padding:0.5rem 1.5rem;background:#dcfce7;'
+            + 'color:#166534;border:none;cursor:default;">&#9989; Payment Received</span>';
+      }
+      if (isConfirmed) {
+        html += '<button class="btn btn-primary" style="padding:0.5rem 1.5rem;" '
+            + 'onclick="markActive(' + b.id + ')">&#9654; Start Trip</button>';
+      }
+      if (isActive) {
+        html += '<button class="btn" style="padding:0.5rem 1.5rem;background:var(--success);color:#fff;" '
+            + 'onclick="markCompleted(' + b.id + ')">&#9989; Complete Trip</button>';
+      }
+      html += '</div>';
+    } else {
+      html += '<p style="color:' + (isCancelled ? 'var(--danger)' : 'var(--success)')
+          + ';font-size:0.875rem;font-weight:600;">'
+          + (isCancelled ? '&#10060; Booking was cancelled.' : '&#9989; Trip completed.') + '</p>';
+    }
+
+    html += '</div>';
+    return html;
+  }
+
+  function markPaid(bookingId) {
+    if (!confirm('Confirm payment received?')) return;
+    fetch('/api/driver/bookings/' + bookingId + '/payment', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paymentStatus: 'PAID' })
+    }).then(function(res) {
+      if (res.ok) { alert('Payment marked as PAID!'); loadDriverBookings(); }
+      else          alert('Error updating payment');
+    });
+  }
+
+  function markActive(bookingId) {
+    if (!confirm('Start this trip?')) return;
+    fetch('/api/driver/bookings/' + bookingId + '/status', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'ACTIVE' })
+    }).then(function(res) {
+      if (res.ok) { alert('Trip started!'); loadDriverBookings(); }
+      else          alert('Error updating status');
+    });
+  }
+
+  function markCompleted(bookingId) {
+    if (!confirm('Complete this trip?')) return;
+    fetch('/api/driver/bookings/' + bookingId + '/status', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'COMPLETED' })
+    }).then(function(res) {
+      if (res.ok) { alert('Trip completed!'); loadDriverBookings(); }
+      else          alert('Error updating status');
+    });
+  }
+
+  function loadLeaveStatus() {
+    var driverId = localStorage.getItem('driverId');
+    var el       = document.getElementById('currentLeaveStatus');
+    var formEl   = document.getElementById('leaveForm');
+
+    fetch('/api/driver/' + driverId + '/leave-status')
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (!data.leaveStatus || data.leaveStatus === 'NONE') {
+        el.innerHTML = ''; formEl.style.display = 'block'; return;
+      }
+      var cls =
+        data.leaveStatus === 'PENDING'  ? 'alert-warning' :
+        data.leaveStatus === 'APPROVED' ? 'alert-success'  : 'alert-error';
+      el.innerHTML =
+        '<div class="alert ' + cls + '">'
+        + '<strong>Leave Status: ' + data.leaveStatus + '</strong><br>'
+        + 'From: ' + (data.leaveStart || '-') + ' To: ' + (data.leaveEnd || '-') + '<br>'
+        + 'Reason: ' + (data.reason || '-')
+        + (data.leaveStatus === 'PENDING'
+          ? '<br><br><button class="btn btn-danger btn-sm" onclick="cancelLeave()">Cancel Request</button>'
+          : '')
+        + '</div>';
+      formEl.style.display =
+        (data.leaveStatus === 'PENDING' || data.leaveStatus === 'APPROVED') ? 'none' : 'block';
+    })
+    .catch(function(err) { console.error('Leave status error:', err); el.innerHTML = ''; });
+  }
+
+  function applyLeave() {
+    var driverId = localStorage.getItem('driverId');
+    var start    = document.getElementById('leaveStart').value;
+    var end      = document.getElementById('leaveEnd').value;
+    var reason   = document.getElementById('leaveReason').value.trim();
+    var errEl    = document.getElementById('leaveErr');
+    var sucEl    = document.getElementById('leaveSuccess');
+
+    if (!start || !end || !reason) { errEl.textContent = 'Please fill all fields'; return; }
+    if (new Date(start) > new Date(end)) { errEl.textContent = 'Start date must be before end date'; return; }
+    errEl.textContent = ''; sucEl.textContent = 'Submitting...';
+
+    fetch('/api/driver/' + driverId + '/apply-leave', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ leaveStart: start, leaveEnd: end, reason: reason })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      sucEl.textContent = data.message || 'Leave request submitted!';
+      errEl.textContent = '';
+      document.getElementById('leaveStart').value  = '';
+      document.getElementById('leaveEnd').value    = '';
+      document.getElementById('leaveReason').value = '';
+      setTimeout(function() { loadLeaveStatus(); }, 1500);
+    })
+    .catch(function(err) { sucEl.textContent = ''; errEl.textContent = 'Error: ' + err.message; });
+  }
+
+  function cancelLeave() {
+    var driverId = localStorage.getItem('driverId');
+    if (!confirm('Cancel leave request?')) return;
+    fetch('/api/driver/' + driverId + '/cancel-leave', { method: 'PUT' })
+    .then(function(res) { return res.json(); })
+    .then(function(data) { alert(data.message || 'Leave cancelled'); loadLeaveStatus(); })
+    .catch(function(err) { alert('Error: ' + err.message); });
+  }
+
+  // Auto-login if session data exists
+  window.onload = function() {
+    var savedId    = localStorage.getItem('driverId');
+    var savedPhone = localStorage.getItem('driverPhone');
+    if (savedId && savedPhone) {
+      document.getElementById('driverId').value    = savedId;
+      document.getElementById('driverPhone').value = savedPhone;
+      driverLogin();
+    }
+  };
+
+</script>
+</body>
+</html>

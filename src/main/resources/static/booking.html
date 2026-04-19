@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Car - DriveEasy</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="data:,">
+    <style>
+        /* Live 12-hour time preview shown under each time input */
+        .time-preview {
+            font-size: 0.8rem;
+            color: var(--primary);
+            font-weight: 600;
+            margin-top: 0.3rem;
+            min-height: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="/" class="brand">&#128663; DriveEasy</a>
+    <div class="nav-links">
+        <span id="navUserName" class="nav-user-name" style="display:none;"></span>
+        <a href="cars.html">Browse Cars</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="#" onclick="logout()">Logout</a>
+    </div>
+    <div class="hamburger" id="hamburger" onclick="toggleMobileNav()">
+        <span></span><span></span><span></span>
+    </div>
+</nav>
+
+<div class="mobile-nav" id="mobileNav">
+    <a href="cars.html">&#128663; Browse Cars</a>
+    <a href="dashboard.html">&#128203; Dashboard</a>
+    <a href="#" onclick="logout()">&#128682; Logout</a>
+</div>
+
+<div style="max-width:640px;margin:2rem auto;padding:0 1rem;">
+    <div class="card">
+
+        <h2 style="color:var(--primary);margin-bottom:0.3rem;font-weight:800;">Confirm Booking</h2>
+        <p style="color:var(--text-light);font-size:0.875rem;margin-bottom:1.5rem;">
+            Fill in the details below to complete your booking
+        </p>
+
+        <!-- Car Summary -->
+        <div id="carSummary"
+             style="background:linear-gradient(135deg,#eef2ff,#e8f4ff);
+                    padding:1.25rem;border-radius:var(--radius-md);
+                    margin-bottom:1.5rem;border:1px solid #c7d2fe;">
+            Loading car info...
+        </div>
+
+        <!-- Booking Type -->
+        <div class="form-group">
+            <label>Booking Type</label>
+            <div class="radio-group" id="bookingTypeGroup">
+                <label class="radio-option selected" id="opt-hourly">
+                    <input type="radio" name="bookingType" value="HOURLY" checked
+                           onchange="handleTypeChange(this)">
+                    &#9200; Hourly
+                </label>
+                <label class="radio-option" id="opt-daily">
+                    <input type="radio" name="bookingType" value="DAILY"
+                           onchange="handleTypeChange(this)">
+                    &#128197; Daily
+                </label>
+            </div>
+        </div>
+
+        <!-- HOURLY FIELDS -->
+        <div id="hourlyFields">
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" id="h-date" onchange="updatePrice()">
+            </div>
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label>Start Time</label>
+                    <input type="time" id="h-start" onchange="updateTimePreview()">
+                    <!-- FIX: Live 12-hour preview label -->
+                    <div class="time-preview" id="h-start-preview"></div>
+                </div>
+                <div class="form-group">
+                    <label>End Time</label>
+                    <input type="time" id="h-end" onchange="updateTimePreview()">
+                    <div class="time-preview" id="h-end-preview"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DAILY FIELDS -->
+        <div id="dailyFields" style="display:none;">
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label>Start Date</label>
+                    <input type="date" id="d-start" onchange="onDailyStartChange()">
+                </div>
+                <div class="form-group">
+                    <label>End Date</label>
+                    <input type="date" id="d-end" onchange="updatePrice()">
+                </div>
+            </div>
+        </div>
+
+        <!-- Locations -->
+        <div class="form-group">
+            <label>Pickup Location</label>
+            <input type="text" id="pickup" placeholder="Enter pickup address">
+        </div>
+        <div class="form-group">
+            <label>Drop Location</label>
+            <input type="text" id="drop" placeholder="Enter drop address">
+        </div>
+
+        <!-- Driver Option -->
+        <div class="form-group">
+            <label>Driver Service</label>
+            <div class="radio-group" id="driverGroup">
+                <label class="radio-option selected" id="opt-nodriver">
+                    <input type="radio" name="driverOpt" value="no" checked
+                           onchange="handleDriverChange(this)">
+                    &#128273; Self Drive
+                </label>
+                <label class="radio-option" id="opt-withdriver">
+                    <input type="radio" name="driverOpt" value="yes"
+                           onchange="handleDriverChange(this)">
+                    &#128104;&#8205;&#9992; With Driver
+                </label>
+            </div>
+            <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.5rem;">
+                Driver available: Morning 6:00 AM&#8211;2:00 PM,
+                Evening 2:00 PM&#8211;10:00 PM, Night 10:00 PM&#8211;6:00 AM.
+            </p>
+        </div>
+
+        <!-- Price Preview -->
+        <div id="pricePreview"
+             style="display:none;background:#f0fff4;padding:1rem 1.25rem;
+                    border-radius:var(--radius-md);margin-bottom:1rem;
+                    border:1px solid #86efac;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-weight:600;color:#166534;">Estimated Total</span>
+                <span id="priceAmt" style="font-size:1.3rem;font-weight:800;color:#166534;">-</span>
+            </div>
+        </div>
+
+        <div id="errMsg"
+             style="color:var(--danger);margin-bottom:1rem;
+                    font-size:0.875rem;font-weight:500;"></div>
+
+        <button class="btn btn-accent"
+                style="width:100%;font-size:1rem;padding:0.9rem;"
+                onclick="submitBooking()">
+            &#9989; Confirm Booking
+        </button>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+    var params  = new URLSearchParams(window.location.search);
+    var carId   = params.get('carId');
+    var carData = null;
+
+    // Nav setup
+    var name   = localStorage.getItem('name');
+    var nameEl = document.getElementById('navUserName');
+    if (name) { nameEl.textContent = '\uD83D\uDC64 ' + name; nameEl.style.display = 'inline-flex'; }
+
+    function toggleMobileNav() {
+        document.getElementById('mobileNav').classList.toggle('open');
+        document.getElementById('hamburger').classList.toggle('open');
+    }
+
+    function logout() { localStorage.clear(); window.location.href = '/login.html'; }
+
+    // =============================================
+    // FIX: Convert 24-hour time string to 12-hour AM/PM
+    // e.g. "14:30" -> "2:30 PM"  |  "09:15" -> "9:15 AM"
+    // =============================================
+    function timeTo12Hour(timeStr) {
+        if (!timeStr) return '';
+        var parts   = timeStr.split(':');
+        var hours   = parseInt(parts[0], 10);
+        var minutes = parts[1] || '00';
+        var ampm    = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        if (hours === 0) hours = 12;
+        return hours + ':' + minutes + ' ' + ampm;
+    }
+
+    // Update the live preview labels under the time inputs
+    function updateTimePreview() {
+        var startVal = document.getElementById('h-start').value;
+        var endVal   = document.getElementById('h-end').value;
+        document.getElementById('h-start-preview').textContent =
+            startVal ? '\u2192 ' + timeTo12Hour(startVal) : '';
+        document.getElementById('h-end-preview').textContent =
+            endVal ? '\u2192 ' + timeTo12Hour(endVal) : '';
+        updatePrice();
+    }
+
+    // Load car details
+    async function loadCar() {
+        try {
+            var res = await fetch('/api/cars/public/' + carId);
+            if (!res.ok) throw new Error('Car not found');
+            carData = await res.json();
+
+            document.getElementById('carSummary').innerHTML =
+                '<div style="display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap;">'
+                + '<div style="font-size:2.5rem;">&#128663;</div>'
+                + '<div style="flex:1;">'
+                + '<div style="font-size:1.1rem;font-weight:700;color:var(--primary);">'
+                + carData.name + (carData.brand ? ' \u2014 ' + carData.brand : '') + '</div>'
+                + '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem;">'
+                + '<span class="badge badge-' + carData.type.toLowerCase() + '">' + carData.type + '</span>'
+                + '<span class="spec-chip">&#128186; ' + carData.seats + ' seats</span>'
+                + '<span class="spec-chip">&#9981; ' + (carData.fuelType || 'Petrol') + '</span>'
+                + '<span class="spec-chip">&#9881;&#65039; ' + (carData.transmission || 'Manual') + '</span>'
+                + '</div>'
+                + '<div style="margin-top:0.75rem;font-size:0.9rem;color:var(--text-light);">'
+                + '&#8377;' + carData.rentPerHour + '/hr &nbsp;&middot;&nbsp; &#8377;' + carData.rentPerDay + '/day'
+                + '</div></div></div>';
+
+            // Set date defaults
+            var today = new Date().toISOString().split('T')[0];
+            document.getElementById('h-date').value  = today;
+            document.getElementById('h-date').min    = today;
+            document.getElementById('d-start').value = today;
+            document.getElementById('d-start').min   = today;
+            document.getElementById('d-end').min     = today;
+
+            // Apply booking type from URL param
+            var urlType = params.get('type') || 'HOURLY';
+            if (urlType === 'DAILY') {
+                document.querySelector('[value="DAILY"]').checked = true;
+                handleTypeChange({ value: 'DAILY' });
+            }
+        } catch(e) {
+            document.getElementById('carSummary').innerHTML =
+                '<p style="color:red;">Error loading car: ' + e.message + '</p>';
+        }
+    }
+
+    function handleTypeChange(radio) {
+        var isHourly = (radio.value === 'HOURLY');
+        document.getElementById('hourlyFields').style.display = isHourly ? 'block' : 'none';
+        document.getElementById('dailyFields').style.display  = isHourly ? 'none'  : 'block';
+        document.getElementById('opt-hourly').classList.toggle('selected',  isHourly);
+        document.getElementById('opt-daily').classList.toggle('selected',  !isHourly);
+        updatePrice();
+    }
+
+    function handleDriverChange(radio) {
+        var withDriver = (radio.value === 'yes');
+        document.getElementById('opt-nodriver').classList.toggle('selected',   !withDriver);
+        document.getElementById('opt-withdriver').classList.toggle('selected',  withDriver);
+    }
+
+    function onDailyStartChange() {
+        document.getElementById('d-end').min = document.getElementById('d-start').value;
+        updatePrice();
+    }
+
+    function updatePrice() {
+        if (!carData) return;
+        var isHourly = (document.querySelector('[name="bookingType"]:checked').value === 'HOURLY');
+        var priceEl  = document.getElementById('priceAmt');
+        var previewEl= document.getElementById('pricePreview');
+
+        if (isHourly) {
+            var startVal = document.getElementById('h-start').value;
+            var endVal   = document.getElementById('h-end').value;
+            if (startVal && endVal) {
+                var sParts   = startVal.split(':');
+                var eParts   = endVal.split(':');
+                var sMins    = parseInt(sParts[0]) * 60 + parseInt(sParts[1]);
+                var eMins    = parseInt(eParts[0]) * 60 + parseInt(eParts[1]);
+                var diffMins = eMins - sMins;
+                if (diffMins > 0) {
+                    var hrs   = Math.ceil(diffMins / 60);
+                    var total = hrs * parseFloat(carData.rentPerHour);
+                    priceEl.textContent   = '&#8377;' + total + ' (' + hrs + ' hr' + (hrs > 1 ? 's' : '') + ')';
+                    previewEl.style.display = 'block';
+                    return;
+                }
+            }
+        } else {
+            var startD = document.getElementById('d-start').value;
+            var endD   = document.getElementById('d-end').value;
+            if (startD && endD) {
+                var diff  = (new Date(endD) - new Date(startD)) / (1000 * 60 * 60 * 24);
+                if (diff > 0) {
+                    var total = diff * parseFloat(carData.rentPerDay);
+                    priceEl.textContent   = '&#8377;' + total + ' (' + diff + ' day' + (diff > 1 ? 's' : '') + ')';
+                    previewEl.style.display = 'block';
+                    return;
+                }
+            }
+        }
+        previewEl.style.display = 'none';
+    }
+
+    // Helper: format a datetime string for alert confirmation
+    function fmtForAlert(dateStr) {
+        if (!dateStr) return '-';
+        var d    = new Date(dateStr);
+        var date = d.toLocaleDateString('en-IN');
+        var hrs  = d.getHours();
+        var mins = d.getMinutes();
+        var ampm = hrs >= 12 ? 'PM' : 'AM';
+        hrs  = hrs  % 12; if (hrs  === 0) hrs  = 12;
+        var mStr = mins < 10 ? '0' + mins : mins;
+        return date + ' ' + hrs + ':' + mStr + ' ' + ampm;
+    }
+
+    // ===== SUBMIT BOOKING =====
+    async function submitBooking() {
+        if (!localStorage.getItem('token')) {
+            alert('Please login first!');
+            window.location.href = '/login.html';
+            return;
+        }
+
+        var errEl       = document.getElementById('errMsg');
+        var bookingType = document.querySelector('[name="bookingType"]:checked').value;
+        var withDriver  = (document.querySelector('[name="driverOpt"]:checked').value === 'yes');
+        var pickup      = document.getElementById('pickup').value.trim();
+        var drop        = document.getElementById('drop').value.trim();
+        var startDatetime, endDatetime;
+
+        if (bookingType === 'HOURLY') {
+            var date   = document.getElementById('h-date').value;
+            var startT = document.getElementById('h-start').value;
+            var endT   = document.getElementById('h-end').value;
+            if (!date || !startT || !endT) {
+                errEl.textContent = 'Please fill date and both start/end times'; return;
+            }
+            startDatetime = date + 'T' + startT + ':00';
+            endDatetime   = date + 'T' + endT   + ':00';
+            if (new Date(startDatetime) >= new Date(endDatetime)) {
+                errEl.textContent = 'End time must be after start time'; return;
+            }
+        } else {
+            var startD = document.getElementById('d-start').value;
+            var endD   = document.getElementById('d-end').value;
+            if (!startD || !endD) { errEl.textContent = 'Please fill start and end dates'; return; }
+            startDatetime = startD + 'T00:00:00';
+            endDatetime   = endD   + 'T23:59:59';
+            if (new Date(startDatetime) > new Date(endDatetime)) {
+                errEl.textContent = 'End date must be on or after start date'; return;
+            }
+        }
+
+        errEl.textContent = 'Booking...';
+
+        try {
+            var booking = await createBooking({
+                carId:          parseInt(carId),
+                bookingType:    bookingType,
+                startDatetime:  startDatetime,
+                endDatetime:    endDatetime,
+                pickupLocation: pickup || null,
+                dropLocation:   drop   || null,
+                withDriver:     withDriver
+            });
+
+            var driverMsg = booking.driver
+                ? '\nDriver: ' + booking.driver.name + ' (' + booking.driver.phone + ')'
+                : '\nSelf drive';
+
+            alert(
+                'Booking Confirmed!\n\n'
+                + 'Booking ID: #' + booking.id + '\n'
+                + 'Car: '  + (booking.car ? booking.car.name : '') + '\n'
+                + 'From: ' + fmtForAlert(booking.startDatetime) + '\n'
+                + 'To:   ' + fmtForAlert(booking.endDatetime)
+                + driverMsg + '\n'
+                + 'Total: Rs.' + booking.totalAmount
+            );
+
+            window.location.href = '/dashboard.html';
+
+        } catch(e) {
+            errEl.textContent = 'Error: ' + e.message;
+        }
+    }
+
+    if (!carId) {
+        document.getElementById('carSummary').innerHTML =
+            '<p style="color:red;">No car selected. <a href="cars.html">Browse Cars</a></p>';
+    } else {
+        loadCar();
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - DriveEasy</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="data:,">
+    <style>
+        .chat-container {
+          max-width: 900px;
+          margin: 2rem auto;
+          padding: 0 1rem;
+        }
+        .chat-box {
+          height: 400px;
+          overflow-y: auto;
+          border: 1px solid #eee;
+          border-radius: 0 0 10px 10px;
+          padding: 1rem;
+          background: #f9f9f9;
+          display: flex;
+          flex-direction: column;
+          gap: 0.8rem;
+        }
+        .chat-msg {
+          display: flex;
+          flex-direction: column;
+          max-width: 70%;
+        }
+        .chat-msg.mine {
+          align-self: flex-end;
+          align-items: flex-end;
+        }
+        .chat-msg.other {
+          align-self: flex-start;
+          align-items: flex-start;
+        }
+        .bubble {
+          padding: 0.6rem 1rem;
+          border-radius: 16px;
+          font-size: 0.95rem;
+          line-height: 1.4;
+          word-break: break-word;
+        }
+        .chat-msg.mine .bubble {
+          background: #1a3c6e;
+          color: #fff;
+          border-bottom-right-radius: 4px;
+        }
+        .chat-msg.other .bubble {
+          background: #fff;
+          color: #222;
+          border: 1px solid #eee;
+          border-bottom-left-radius: 4px;
+        }
+        .msg-time {
+          font-size: 0.72rem;
+          color: #999;
+          margin-top: 0.2rem;
+          padding: 0 0.3rem;
+        }
+        .msg-sender {
+          font-size: 0.78rem;
+          font-weight: 600;
+          color: #666;
+          margin-bottom: 0.2rem;
+          padding: 0 0.3rem;
+        }
+        .chat-input-area {
+          display: flex;
+          gap: 0.8rem;
+          align-items: center;
+          padding: 0.8rem;
+          background: #fff;
+          border: 1px solid #eee;
+          border-top: none;
+          border-radius: 0 0 10px 10px;
+        }
+        .chat-input-area input {
+          flex: 1;
+          padding: 0.7rem 1rem;
+          border: 1px solid #ddd;
+          border-radius: 25px;
+          font-size: 0.95rem;
+          outline: none;
+        }
+        .chat-input-area input:focus {
+          border-color: #1a3c6e;
+        }
+        .send-btn {
+          padding: 0.7rem 1.5rem;
+          background: #1a3c6e;
+          color: #fff;
+          border: none;
+          border-radius: 25px;
+          cursor: pointer;
+          font-size: 0.9rem;
+          font-weight: 500;
+        }
+        .send-btn:hover {
+          background: #2a6099;
+        }
+        .chat-header {
+          background: #1a3c6e;
+          color: #fff;
+          padding: 1rem 1.5rem;
+          border-radius: 10px 10px 0 0;
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+        .user-list-item {
+          padding: 0.8rem 1rem;
+          border-radius: 8px;
+          cursor: pointer;
+          border: 1px solid #eee;
+          background: #fff;
+          margin-bottom: 0.5rem;
+          transition: all 0.2s;
+        }
+        .user-list-item:hover {
+          background: #f0f4ff;
+          border-color: #1a3c6e;
+        }
+        .user-list-item.active {
+          background: #1a3c6e;
+          color: #fff;
+          border-color: #1a3c6e;
+        }
+        .user-list-item.active .user-email {
+          color: rgba(255,255,255,0.7);
+        }
+        .user-email {
+          font-size: 0.78rem;
+          color: #999;
+          margin-top: 0.2rem;
+        }
+        .empty-chat {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100%;
+          color: #999;
+          text-align: center;
+        }
+        .online-dot {
+          width: 8px;
+          height: 8px;
+          background: #28a745;
+          border-radius: 50%;
+          display: inline-block;
+          margin-right: 0.3rem;
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="/" class="brand">DriveEasy</a>
+    <div>
+        <a href="cars.html">Browse Cars</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="feedback.html">Reviews</a>
+        <a href="chat.html">Chat</a>
+        <a href="driver.html">Driver Login</a>
+        <a href="login.html">Login</a>
+    </div>
+</nav>
+
+<div class="chat-container">
+
+    <!-- NOT LOGGED IN -->
+    <div id="notLoggedIn"
+         style="display:none;
+    text-align:center; padding:4rem;">
+        <p style="font-size:3rem;">💬</p>
+        <h3 style="color:#1a3c6e;
+      margin:1rem 0;">
+            Login to Chat with Support
+        </h3>
+        <p style="color:#666;
+      margin-bottom:1.5rem;">
+            Have a question? We are here to help!
+        </p>
+        <a href="login.html"
+           class="btn btn-primary">
+            Login Now
+        </a>
+    </div>
+
+    <!-- ========== USER CHAT ========== -->
+    <div id="userChat" style="display:none;">
+        <h2 style="color:#1a3c6e;
+      margin-bottom:1rem;">
+            💬 Chat with Support
+        </h2>
+
+        <!-- Header -->
+        <div class="chat-header">
+            <div style="width:38px; height:38px;
+        background:rgba(255,255,255,0.2);
+        border-radius:50%;
+        display:flex; align-items:center;
+        justify-content:center;">
+                👨‍💼
+            </div>
+            <div>
+                <div style="font-weight:600;">
+                    DriveEasy Support
+                </div>
+                <div style="font-size:0.82rem;
+          opacity:0.85;">
+                    <span class="online-dot"></span>
+                    We reply quickly
+                </div>
+            </div>
+            <button onclick="loadUserChat()"
+                    style="margin-left:auto;
+        background:rgba(255,255,255,0.2);
+        color:#fff; border:none;
+        padding:0.4rem 0.8rem;
+        border-radius:6px;
+        cursor:pointer; font-size:0.85rem;">
+                🔄 Refresh
+            </button>
+        </div>
+
+        <!-- Messages -->
+        <div class="chat-box" id="userChatBox">
+            <div class="empty-chat">
+                <p style="font-size:2.5rem;">💬</p>
+                <p style="margin-top:0.5rem;">
+                    Send a message to get started!
+                </p>
+            </div>
+        </div>
+
+        <!-- Input -->
+        <div class="chat-input-area">
+            <input type="text"
+                   id="userMsgInput"
+                   placeholder="Type your message..."
+                   onkeypress="if(event.key==='Enter')
+          sendUserMessage()">
+            <button class="send-btn"
+                    onclick="sendUserMessage()">
+                Send ➤
+            </button>
+        </div>
+    </div>
+
+    <!-- ========== ADMIN CHAT ========== -->
+    <div id="adminChat" style="display:none;">
+        <h2 style="color:#1a3c6e;
+      margin-bottom:0.5rem;">
+            💬 Support Chat — Admin
+        </h2>
+        <p style="color:#666;
+      font-size:0.9rem;
+      margin-bottom:1.5rem;">
+            View and reply to customer messages
+        </p>
+
+        <div style="display:flex;
+      gap:1.5rem; align-items:flex-start;">
+
+            <!-- User List Panel -->
+            <div style="width:240px;
+        flex-shrink:0;">
+                <div style="font-weight:600;
+          color:#1a3c6e;
+          margin-bottom:0.8rem;
+          font-size:0.95rem;
+          display:flex;
+          justify-content:space-between;
+          align-items:center;">
+                    Conversations
+                    <button onclick="loadChatUsers()"
+                            style="background:none;
+            border:none; cursor:pointer;
+            color:#1a3c6e; font-size:0.85rem;">
+                        🔄
+                    </button>
+                </div>
+                <div id="userListPanel">
+                    <p style="color:#666;
+            font-size:0.85rem;
+            padding:0.5rem;">
+                        Loading...
+                    </p>
+                </div>
+            </div>
+
+            <!-- Chat Window -->
+            <div style="flex:1; min-width:0;">
+
+                <!-- Chat Header -->
+                <div class="chat-header"
+                     id="adminChatHead"
+                     style="display:none;">
+                    <div style="width:38px; height:38px;
+            background:rgba(255,255,255,0.2);
+            border-radius:50%;
+            display:flex; align-items:center;
+            justify-content:center;">
+                        👤
+                    </div>
+                    <div>
+                        <div style="font-weight:600;"
+                             id="adminChatName">
+                        </div>
+                        <div style="font-size:0.82rem;
+              opacity:0.85;"
+                             id="adminChatEmail">
+                        </div>
+                    </div>
+                    <button
+                            onclick="loadAdminConversation(
+              currentUserId)"
+                            style="margin-left:auto;
+            background:rgba(255,255,255,0.2);
+            color:#fff; border:none;
+            padding:0.4rem 0.8rem;
+            border-radius:6px;
+            cursor:pointer;
+            font-size:0.85rem;">
+                        🔄 Refresh
+                    </button>
+                </div>
+
+                <!-- Messages -->
+                <div class="chat-box"
+                     id="adminChatBox"
+                     style="border-radius:
+            10px 10px 0 0;
+            border-bottom:none;">
+                    <div class="empty-chat">
+                        <p style="font-size:2.5rem;">
+                            💬
+                        </p>
+                        <p style="margin-top:0.5rem;">
+                            Select a user to view messages
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Admin Input -->
+                <div class="chat-input-area"
+                     id="adminInputArea"
+                     style="display:none;">
+                    <input type="text"
+                           id="adminMsgInput"
+                           placeholder="Type your reply..."
+                           onkeypress="if(event.key==='Enter')
+              sendAdminReply()">
+                    <button class="send-btn"
+                            onclick="sendAdminReply()">
+                        Reply ➤
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="js/api.js"></script>
+<script>
+
+    var token =
+      localStorage.getItem('token');
+    var role =
+      localStorage.getItem('role');
+    var currentUserId = null;
+    var refreshTimer = null;
+
+    // ===== INIT =====
+    window.onload = function() {
+      if (!token) {
+        show('notLoggedIn');
+        return;
+      }
+      if (role === 'ADMIN') {
+        show('adminChat');
+        loadChatUsers();
+      } else {
+        show('userChat');
+        loadUserChat();
+        // Auto refresh every 5 seconds
+        refreshTimer = setInterval(
+          loadUserChat, 5000);
+      }
+    };
+
+    function show(id) {
+      var ids = [
+        'notLoggedIn',
+        'userChat',
+        'adminChat'
+      ];
+      ids.forEach(function(i) {
+        document.getElementById(i)
+          .style.display =
+          i === id ? 'block' : 'none';
+      });
+    }
+
+    // =============================================
+    // USER CHAT FUNCTIONS
+    // =============================================
+
+    function loadUserChat() {
+      fetch('/api/chat/history', {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      })
+      .then(function(res) {
+        if (!res.ok) {
+          throw new Error('Status: ' +
+            res.status);
+        }
+        return res.json();
+      })
+      .then(function(messages) {
+        renderUserMessages(messages);
+      })
+      .catch(function(err) {
+        console.error('Load chat error:', err);
+      });
+    }
+
+    function renderUserMessages(messages) {
+      var box =
+        document.getElementById('userChatBox');
+
+      if (!messages || messages.length === 0) {
+        box.innerHTML =
+          '<div class="empty-chat">' +
+          '<p style="font-size:2.5rem;">💬</p>'+
+          '<p style="margin-top:0.5rem;">'+
+          'No messages yet.<br>'+
+          'Send a message to get started!</p>'+
+          '</div>';
+        return;
+      }
+
+      var html = '';
+      messages.forEach(function(m) {
+        var isMe = !m.isFromAdmin;
+        var time = '';
+        if (m.createdAt) {
+          time = new Date(m.createdAt)
+            .toLocaleTimeString('en-IN', {
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+        }
+        html +=
+          '<div class="chat-msg ' +
+          (isMe ? 'mine' : 'other') + '">' +
+          (!isMe ?
+            '<div class="msg-sender">'+
+            '👨‍💼 Support</div>' : '') +
+          '<div class="bubble">' +
+          safe(m.message) + '</div>' +
+          '<div class="msg-time">' +
+          time + '</div>' +
+          '</div>';
+      });
+
+      box.innerHTML = html;
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function sendUserMessage() {
+      var input =
+        document.getElementById('userMsgInput');
+      var msg = input.value.trim();
+      if (!msg) return;
+
+      fetch('/api/chat/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({
+          message: msg
+        })
+      })
+      .then(function(res) {
+        if (!res.ok)
+          throw new Error('Send failed');
+        return res.json();
+      })
+      .then(function() {
+        input.value = '';
+        loadUserChat();
+      })
+      .catch(function(err) {
+        alert('Error sending: ' + err.message);
+      });
+    }
+
+    // =============================================
+    // ADMIN CHAT FUNCTIONS
+    // =============================================
+
+    function loadChatUsers() {
+      var panel =
+        document.getElementById('userListPanel');
+      panel.innerHTML =
+        '<p style="color:#666;'+
+        'font-size:0.85rem;padding:0.5rem;">'+
+        'Loading...</p>';
+
+      fetch('/api/chat/admin/users', {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      })
+      .then(function(res) {
+        if (!res.ok)
+          throw new Error('Status: ' +
+            res.status);
+        return res.json();
+      })
+      .then(function(users) {
+        if (!users || users.length === 0) {
+          panel.innerHTML =
+            '<p style="color:#666;'+
+            'font-size:0.85rem;padding:0.5rem;">'+
+            'No conversations yet.<br>'+
+            'Wait for users to message you.'+
+            '</p>';
+          return;
+        }
+
+        var html = '';
+        users.forEach(function(u) {
+          if (u.role === 'ADMIN') return;
+          html +=
+            '<div class="user-list-item" '+
+            'id="uitem-' + u.id + '" '+
+            'onclick="selectUser(' +
+            u.id + ',\'' +
+            safe(u.name) + '\',\'' +
+            safe(u.email) + '\')">' +
+            '<div style="font-weight:500;">'+
+            '👤 ' + safe(u.name) + '</div>' +
+            '<div class="user-email">' +
+            safe(u.email) + '</div>' +
+            '</div>';
+        });
+        panel.innerHTML = html;
+      })
+      .catch(function(err) {
+        panel.innerHTML =
+          '<p style="color:red;'+
+          'font-size:0.85rem;">'+
+          'Error: ' + err.message + '</p>';
+      });
+    }
+
+    function selectUser(userId, name, email) {
+      currentUserId = userId;
+
+      // Update active state
+      document.querySelectorAll(
+        '.user-list-item')
+        .forEach(function(el) {
+          el.classList.remove('active');
+        });
+      var item =
+        document.getElementById(
+          'uitem-' + userId);
+      if (item) item.classList.add('active');
+
+      // Show header and input
+      document.getElementById('adminChatHead')
+        .style.display = 'flex';
+      document.getElementById('adminInputArea')
+        .style.display = 'flex';
+      document.getElementById('adminChatName')
+        .textContent = name;
+      document.getElementById('adminChatEmail')
+        .textContent = email;
+
+      loadAdminConversation(userId);
+    }
+
+    function loadAdminConversation(userId) {
+      if (!userId) return;
+      fetch('/api/chat/admin/user/' + userId, {
+        headers: {
+          'Authorization': 'Bearer ' + token
+        }
+      })
+      .then(function(res) {
+        if (!res.ok)
+          throw new Error('Status: ' +
+            res.status);
+        return res.json();
+      })
+      .then(function(messages) {
+        renderAdminMessages(messages);
+      })
+      .catch(function(err) {
+        document.getElementById('adminChatBox')
+          .innerHTML =
+          '<p style="color:red;'+
+          'padding:1rem;">'+
+          'Error: ' + err.message + '</p>';
+      });
+    }
+
+    function renderAdminMessages(messages) {
+      var box =
+        document.getElementById('adminChatBox');
+
+      if (!messages || messages.length === 0) {
+        box.innerHTML =
+          '<div class="empty-chat">'+
+          '<p>No messages yet.</p>'+
+          '</div>';
+        return;
+      }
+
+      var html = '';
+      messages.forEach(function(m) {
+        var isAdmin = m.isFromAdmin;
+        var time = '';
+        if (m.createdAt) {
+          time = new Date(m.createdAt)
+            .toLocaleTimeString('en-IN', {
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+        }
+        var senderName = isAdmin ?
+          'You (Admin) 👨‍💼' :
+          (m.sender ? m.sender.name : 'User');
+
+        html +=
+          '<div class="chat-msg ' +
+          (isAdmin ? 'mine' : 'other') + '">' +
+          '<div class="msg-sender">' +
+          senderName + '</div>' +
+          '<div class="bubble">' +
+          safe(m.message) + '</div>' +
+          '<div class="msg-time">' +
+          time + '</div>' +
+          '</div>';
+      });
+
+      box.innerHTML = html;
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function sendAdminReply() {
+      if (!currentUserId) {
+        alert('Please select a user first');
+        return;
+      }
+      var input =
+        document.getElementById('adminMsgInput');
+      var msg = input.value.trim();
+      if (!msg) return;
+
+      fetch('/api/chat/admin/reply', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({
+          message:    msg,
+          receiverId: currentUserId
+        })
+      })
+      .then(function(res) {
+        if (!res.ok)
+          throw new Error('Send failed');
+        return res.json();
+      })
+      .then(function() {
+        input.value = '';
+        loadAdminConversation(currentUserId);
+      })
+      .catch(function(err) {
+        alert('Error: ' + err.message);
+      });
+    }
+
+    // ===== HELPER =====
+    function safe(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+</script>
+</body>
+</html>

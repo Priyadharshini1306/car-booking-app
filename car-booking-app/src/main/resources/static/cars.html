@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Cars - DriveEasy</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="data:,">
+    <style>
+        /*
+         * FIX: When a car has no image, hide the image
+         * wrapper completely — zero empty space.
+         */
+        .car-card.no-image .car-img-wrap {
+            display: none;
+        }
+        /* When no image, add a subtle top accent line instead */
+        .car-card.no-image .car-info {
+            border-top: 3px solid var(--primary);
+        }
+        .car-card {
+            display: flex;
+            flex-direction: column;
+        }
+        .car-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="/" class="brand">&#128663; DriveEasy</a>
+    <div class="nav-links">
+        <span id="navUserName" class="nav-user-name" style="display:none;"></span>
+        <a href="cars.html">Browse Cars</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="feedback.html">Reviews</a>
+        <a href="driver.html">Driver Login</a>
+        <a href="#" id="authLink">Login</a>
+    </div>
+    <div class="hamburger" id="hamburger" onclick="toggleMobileNav()">
+        <span></span><span></span><span></span>
+    </div>
+</nav>
+
+<div class="mobile-nav" id="mobileNav">
+    <span id="mobileUserName" style="color:var(--accent);font-weight:700;padding:0.5rem 1rem;"></span>
+    <a href="cars.html">&#128663; Browse Cars</a>
+    <a href="dashboard.html">&#128203; Dashboard</a>
+    <a href="feedback.html">&#11088; Reviews</a>
+    <a href="driver.html">&#128104;&#8205;&#9992; Driver Login</a>
+    <a href="#" id="mobileAuthLink">&#128273; Login</a>
+</div>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+    <div class="filter-group">
+        <label>Car Type</label>
+        <select id="f-type" onchange="applyFilters()">
+            <option value="">All Types</option>
+            <option value="LUXURY">Luxury</option>
+            <option value="COMFORT">Comfort</option>
+            <option value="NORMAL">Normal</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <label>Min Seats</label>
+        <select id="f-seats" onchange="applyFilters()">
+            <option value="">Any Seats</option>
+            <option value="4">4+</option>
+            <option value="5">5+</option>
+            <option value="7">7+</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <label>Booking Type</label>
+        <select id="f-btype" onchange="applyFilters()">
+            <option value="HOURLY">Hourly</option>
+            <option value="DAILY">Daily</option>
+        </select>
+    </div>
+    <div class="filter-group">
+        <label>Max Price (&#8377;/hr)</label>
+        <input type="number" id="f-price" placeholder="e.g. 500" oninput="applyFilters()">
+    </div>
+</div>
+
+<div class="result-count" id="resultCount"></div>
+
+<div id="carGrid" class="car-grid">
+    <p style="padding:2rem;color:var(--text-light);">Loading cars...</p>
+</div>
+
+<footer>
+    <p>DriveEasy Car Booking &copy; 2026. All rights reserved.</p>
+</footer>
+
+<script src="js/api.js"></script>
+<script>
+    var bookingType = 'HOURLY';
+    var allCars     = [];
+
+    // Nav setup
+    var token        = localStorage.getItem('token');
+    var name         = localStorage.getItem('name');
+    var role         = localStorage.getItem('role');
+    var nameEl       = document.getElementById('navUserName');
+    var authEl       = document.getElementById('authLink');
+    var mobileNameEl = document.getElementById('mobileUserName');
+    var mobileAuthEl = document.getElementById('mobileAuthLink');
+
+    if (token && name) {
+        nameEl.textContent       = '\uD83D\uDC64 ' + name;
+        nameEl.style.display     = 'inline-flex';
+        mobileNameEl.textContent = '\uD83D\uDC64 ' + name;
+    }
+    if (token) {
+        if (role === 'ADMIN') {
+            authEl.textContent       = 'Admin Panel';
+            authEl.href              = '/admin.html';
+            mobileAuthEl.textContent = 'Admin Panel';
+            mobileAuthEl.href        = '/admin.html';
+        } else {
+            authEl.textContent       = 'Logout';
+            mobileAuthEl.textContent = 'Logout';
+            authEl.onclick = mobileAuthEl.onclick = function() {
+                localStorage.clear(); location.reload();
+            };
+        }
+    }
+
+    function toggleMobileNav() {
+        document.getElementById('mobileNav').classList.toggle('open');
+        document.getElementById('hamburger').classList.toggle('open');
+    }
+
+    async function loadCars() {
+        var grid = document.getElementById('carGrid');
+        try {
+            allCars = await filterCars('', '');
+            renderCars(allCars);
+        } catch(e) {
+            grid.innerHTML = '<p style="color:red;padding:2rem;">Error loading cars: ' + e.message + '</p>';
+        }
+    }
+
+    function applyFilters() {
+        var type    = document.getElementById('f-type').value;
+        var seats   = parseInt(document.getElementById('f-seats').value) || 0;
+        var maxPr   = parseFloat(document.getElementById('f-price').value) || 0;
+        bookingType = document.getElementById('f-btype').value;
+
+        var filtered = allCars.filter(function(c) {
+            if (type  && c.type !== type)         return false;
+            if (seats && c.seats < seats)         return false;
+            if (maxPr && c.rentPerHour > maxPr)   return false;
+            return true;
+        });
+        renderCars(filtered);
+    }
+
+    function renderCars(cars) {
+        var grid  = document.getElementById('carGrid');
+        var count = document.getElementById('resultCount');
+        count.textContent = cars.length + ' car' + (cars.length !== 1 ? 's' : '') + ' found';
+
+        if (!cars.length) {
+            grid.innerHTML =
+                '<div style="text-align:center;padding:4rem;grid-column:1/-1;">'
+                + '<p style="font-size:3rem;">&#128269;</p>'
+                + '<p style="color:var(--text-light);font-size:1.1rem;margin-top:1rem;">No cars match your filters.</p>'
+                + '<button class="btn btn-primary" style="margin-top:1rem;" onclick="resetFilters()">Show All Cars</button></div>';
+            return;
+        }
+
+        grid.innerHTML = cars.map(function(c) { return renderCarCard(c); }).join('');
+    }
+
+    // =============================================
+    // FIX: Check if a car has a valid image URL
+    // Returns false for null, undefined, or blank
+    // =============================================
+    function hasValidImage(car) {
+        return car.imageUrl
+            && typeof car.imageUrl === 'string'
+            && car.imageUrl.trim() !== '';
+    }
+
+    function renderCarCard(car) {
+        var badge = car.type.toLowerCase();
+        var price = bookingType === 'HOURLY'
+            ? '&#8377;' + car.rentPerHour + '/hr'
+            : '&#8377;' + car.rentPerDay  + '/day';
+
+        // Add 'no-image' class when no valid URL → CSS hides wrapper
+        var noImgClass = hasValidImage(car) ? '' : ' no-image';
+
+        // Only build the image wrapper HTML when URL exists.
+        // When missing: imgHtml = '' so absolutely no space is consumed.
+        var imgHtml = '';
+        if (hasValidImage(car)) {
+            imgHtml =
+                '<div class="car-img-wrap car-card-img-wrap">'
+                + '<img class="car-card-img"'
+                + ' src="' + car.imageUrl.trim() + '"'
+                + ' alt="' + car.name + '"'
+                // If image fails to load at runtime, hide the wrapper and
+                // add no-image class so layout stays clean
+                + ' onerror="'
+                + 'this.parentNode.style.display=\'none\';'
+                + 'this.closest(\'.car-card\').classList.add(\'no-image\');'
+                + '">'
+                + '</div>';
+        }
+
+        return '<div class="car-card' + noImgClass + '">'
+            + imgHtml
+            + '<div class="info car-info">'
+            + '<div class="name">'  + car.name + '</div>'
+            + '<div class="brand-label">' + (car.brand || '') + '</div>'
+            + '<div class="price">' + price + '</div>'
+            + '<div class="specs">'
+            + '<span class="badge badge-' + badge + '">' + car.type + '</span>'
+            + '<span class="spec-chip">&#128186; ' + car.seats + ' seats</span>'
+            + '<span class="spec-chip">&#9981; '   + (car.fuelType     || 'Petrol') + '</span>'
+            + '<span class="spec-chip">&#9881;&#65039; ' + (car.transmission || 'Manual') + '</span>'
+            + '</div>'
+            + '<a href="booking.html?carId=' + car.id + '&type=' + bookingType + '"'
+            + ' class="btn btn-accent"'
+            + ' style="width:100%;justify-content:center;margin-top:auto;">'
+            + 'Book Now &#8594;</a>'
+            + '</div></div>';
+    }
+
+    function resetFilters() {
+        document.getElementById('f-type').value  = '';
+        document.getElementById('f-seats').value = '';
+        document.getElementById('f-btype').value = 'HOURLY';
+        document.getElementById('f-price').value = '';
+        bookingType = 'HOURLY';
+        renderCars(allCars);
+    }
+
+    // Load from URL params
+    var params    = new URLSearchParams(window.location.search);
+    var initType  = params.get('type')  || '';
+    var initSeats = params.get('seats') || '';
+    if (initType)  document.getElementById('f-type').value  = initType;
+    if (initSeats) document.getElementById('f-seats').value = initSeats;
+
+    loadCars();
+</script>
+</body>
+</html>

@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback - DriveEasy</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .feedback-container {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    .feedback-card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      border-left: 4px solid #e8a020;
+    }
+    .feedback-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.8rem;
+    }
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid #eee;
+    }
+    .tab-btn {
+      padding: 0.6rem 1.5rem;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #666;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      color: #1a3c6e;
+      border-bottom-color: #1a3c6e;
+    }
+    .star {
+      font-size: 2rem;
+      cursor: pointer;
+      color: #ddd;
+      transition: color 0.2s;
+    }
+    .star.active { color: #f5c518; }
+    .avg-box {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      padding: 1.5rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="brand">DriveEasy</a>
+  <div>
+    <a href="cars.html">Browse Cars</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="driver.html">Driver Login</a>
+    <a href="login.html">Login</a>
+  </div>
+</nav>
+
+<div class="feedback-container">
+  <h2 style="color:#1a3c6e;
+    margin-bottom:1.5rem;">
+    Customer Reviews
+  </h2>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active"
+            id="tabAll"
+            onclick="showTab('all', this)">
+      All Reviews
+    </button>
+    <button class="tab-btn"
+            id="tabSubmit"
+            onclick="showTab('submit', this)">
+      Submit Review
+    </button>
+  </div>
+
+  <!-- ALL REVIEWS TAB -->
+  <div id="tab-all">
+
+    <!-- Average Rating Box -->
+    <div class="avg-box" id="avgBox">
+      Loading...
+    </div>
+
+    <!-- Reviews List -->
+    <div id="reviewsList">
+      Loading reviews...
+    </div>
+
+  </div>
+
+  <!-- SUBMIT REVIEW TAB -->
+  <div id="tab-submit" style="display:none;">
+    <div class="card">
+      <h3 style="color:#1a3c6e;
+        margin-bottom:1.5rem;">
+        Submit Your Review
+      </h3>
+
+      <div id="notLoggedIn"
+           style="display:none;
+        text-align:center; padding:1rem;">
+        <p style="color:#666;
+          margin-bottom:1rem;">
+          Please login to submit a review
+        </p>
+        <a href="login.html"
+           class="btn btn-primary">
+          Login Now
+        </a>
+      </div>
+
+      <div id="reviewForm">
+        <div class="form-group">
+          <label>Select Booking *</label>
+          <select id="bookingSelect"
+                  style="width:100%;
+            padding:0.6rem 0.8rem;
+            border:1px solid #ddd;
+            border-radius:6px;
+            font-size:0.95rem;">
+            <option value="">
+              -- Loading bookings... --
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Your Rating *</label>
+          <div style="display:flex;
+            gap:0.3rem; margin:0.5rem 0;">
+            <span class="star"
+                  id="star1"
+                  onclick="setRating(1)">★</span>
+            <span class="star"
+                  id="star2"
+                  onclick="setRating(2)">★</span>
+            <span class="star"
+                  id="star3"
+                  onclick="setRating(3)">★</span>
+            <span class="star"
+                  id="star4"
+                  onclick="setRating(4)">★</span>
+            <span class="star"
+                  id="star5"
+                  onclick="setRating(5)">★</span>
+          </div>
+          <p id="ratingText"
+             style="font-size:0.85rem;
+            color:#666;">
+            Click a star to rate
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label>Your Comment</label>
+          <textarea id="commentText"
+                    rows="4"
+                    placeholder="Share your experience..."
+                    style="width:100%;
+            padding:0.6rem 0.8rem;
+            border:1px solid #ddd;
+            border-radius:6px;
+            font-size:0.95rem;
+            outline:none;
+            resize:vertical;">
+          </textarea>
+        </div>
+
+        <div id="submitErr"
+             style="color:red;
+          margin-bottom:0.8rem;
+          font-size:0.9rem; min-height:1.2rem;">
+        </div>
+        <div id="submitSuccess"
+             style="color:green;
+          margin-bottom:0.8rem;
+          font-size:0.9rem; min-height:1.2rem;">
+        </div>
+
+        <button class="btn btn-accent"
+                style="width:100%;
+          padding:0.8rem; font-size:1rem;"
+                onclick="doSubmitReview()">
+          Submit Review
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/api.js"></script>
+<script>
+
+  let selectedRating = 0;
+
+  // ===== ON PAGE LOAD =====
+  window.onload = function() {
+    loadAllReviews();
+  };
+
+  // ===== SHOW TAB =====
+  function showTab(tab, el) {
+    document.querySelectorAll('.tab-btn')
+      .forEach(b =>
+        b.classList.remove('active'));
+    el.classList.add('active');
+
+    document.getElementById('tab-all')
+      .style.display =
+      tab === 'all' ? 'block' : 'none';
+    document.getElementById('tab-submit')
+      .style.display =
+      tab === 'submit' ? 'block' : 'none';
+
+    if (tab === 'all') loadAllReviews();
+    if (tab === 'submit') setupSubmitForm();
+  }
+
+  // ===== LOAD ALL REVIEWS =====
+  function loadAllReviews() {
+    const listEl =
+      document.getElementById('reviewsList');
+    const avgEl =
+      document.getElementById('avgBox');
+
+    listEl.innerHTML = 'Loading reviews...';
+    avgEl.innerHTML = 'Loading...';
+
+    fetch('/api/feedback/public/all')
+      .then(function(res) {
+        return res.json();
+      })
+      .then(function(data) {
+
+        if (!data || data.length === 0) {
+          avgEl.innerHTML =
+            '<p style="color:#666;">'+
+            'No reviews yet.</p>';
+          listEl.innerHTML =
+            '<div style="text-align:center;'+
+            'padding:3rem;background:#fff;'+
+            'border-radius:10px;'+
+            'box-shadow:0 2px 16px '+
+            'rgba(0,0,0,0.08);">'+
+            '<p style="font-size:3rem;">⭐</p>'+
+            '<p style="color:#666;'+
+            'font-size:1.1rem;'+
+            'margin-top:1rem;">'+
+            'No reviews yet. '+
+            'Be the first to review!</p>'+
+            '</div>';
+          return;
+        }
+
+        // Calculate average
+        var total = 0;
+        for (var i = 0; i < data.length; i++) {
+          total += data[i].rating;
+        }
+        var avg = (total / data.length)
+          .toFixed(1);
+
+        // Stars for average
+        var avgStars = '';
+        var roundAvg = Math.round(avg);
+        for (var s = 1; s <= 5; s++) {
+          avgStars += s <= roundAvg ?
+            '<span style="color:#f5c518;'+
+            'font-size:1.8rem;">★</span>' :
+            '<span style="color:#ddd;'+
+            'font-size:1.8rem;">★</span>';
+        }
+
+        avgEl.innerHTML =
+          '<div style="font-size:3rem;'+
+          'font-weight:700;color:#1a3c6e;">'+
+          avg + '</div>' +
+          '<div>' + avgStars + '</div>' +
+          '<div style="color:#666;'+
+          'font-size:0.9rem;margin-top:0.3rem;">'+
+          'Based on ' + data.length +
+          ' review(s)</div>';
+
+        // Render each review
+        var html = '';
+        for (var j = 0; j < data.length; j++) {
+          var f = data[j];
+          var stars = '';
+          for (var k = 1; k <= 5; k++) {
+            stars += k <= f.rating ?
+              '<span style="color:#f5c518;">★</span>' :
+              '<span style="color:#ddd;">★</span>';
+          }
+          var date = '';
+          if (f.createdAt) {
+            date = new Date(f.createdAt)
+              .toLocaleDateString('en-IN');
+          }
+          var carName = '';
+          if (f.booking && f.booking.car) {
+            carName = f.booking.car.name;
+            if (f.booking.car.brand) {
+              carName += ' (' +
+                f.booking.car.brand + ')';
+            }
+          }
+          var userName = f.user ?
+            f.user.name : 'User';
+          var comment = f.comment ?
+            '"' + f.comment + '"' : '';
+
+          html +=
+            '<div class="feedback-card">' +
+            '<div class="feedback-header">' +
+            '<strong style="color:#1a3c6e;">' +
+            userName + '</strong>' +
+            '<span style="color:#999;'+
+            'font-size:0.85rem;">' +
+            date + '</span>' +
+            '</div>' +
+            '<div style="margin-bottom:0.5rem;">' +
+            stars +
+            '<span style="color:#666;'+
+            'font-size:0.85rem;'+
+            'margin-left:0.5rem;">' +
+            f.rating + '/5</span>' +
+            '</div>' +
+            (carName ?
+              '<div style="color:#666;'+
+              'font-size:0.85rem;'+
+              'margin-bottom:0.5rem;">'+
+              '🚗 ' + carName + '</div>' : '') +
+            (comment ?
+              '<div style="color:#444;'+
+              'font-size:0.95rem;'+
+              'font-style:italic;">' +
+              comment + '</div>' : '') +
+            '</div>';
+        }
+        listEl.innerHTML = html;
+      })
+      .catch(function(err) {
+        avgEl.innerHTML =
+          '<p style="color:red;">'+
+          'Error: ' + err.message + '</p>';
+        listEl.innerHTML =
+          '<p style="color:red;'+
+          'padding:2rem;">'+
+          'Error loading reviews: ' +
+          err.message + '</p>';
+      });
+  }
+
+  // ===== SETUP SUBMIT FORM =====
+  function setupSubmitForm() {
+    var token = localStorage.getItem('token');
+    if (!token) {
+      document.getElementById('notLoggedIn')
+        .style.display = 'block';
+      document.getElementById('reviewForm')
+        .style.display = 'none';
+      return;
+    }
+
+    document.getElementById('notLoggedIn')
+      .style.display = 'none';
+    document.getElementById('reviewForm')
+      .style.display = 'block';
+
+    loadBookingsForSelect();
+  }
+
+  // ===== LOAD BOOKINGS FOR SELECT =====
+  function loadBookingsForSelect() {
+    var token = localStorage.getItem('token');
+    fetch('/api/bookings/my', {
+      headers: {
+        'Authorization': 'Bearer ' + token
+      }
+    })
+    .then(function(res) {
+      return res.json();
+    })
+    .then(function(bookings) {
+      var select =
+        document.getElementById(
+          'bookingSelect');
+
+      if (!bookings || !bookings.length) {
+        select.innerHTML =
+          '<option value="">'+
+          'No bookings found</option>';
+        return;
+      }
+
+      var options =
+        '<option value="">'+
+        '-- Select your booking --'+
+        '</option>';
+      for (var i = 0;
+           i < bookings.length; i++) {
+        var b = bookings[i];
+        var carName = b.car ?
+          b.car.name : 'Car';
+        var date = new Date(b.startDatetime)
+          .toLocaleDateString('en-IN');
+        options +=
+          '<option value="' + b.id + '">' +
+          '#' + b.id + ' - ' + carName +
+          ' - ' + date +
+          ' (₹' + b.totalAmount + ')' +
+          '</option>';
+      }
+      select.innerHTML = options;
+
+      // Pre-select from URL
+      var params = new URLSearchParams(
+        window.location.search);
+      var bookingId = params.get('bookingId');
+      if (bookingId) {
+        select.value = bookingId;
+      }
+    })
+    .catch(function(err) {
+      console.error('Error:', err);
+    });
+  }
+
+  // ===== SET STAR RATING =====
+  function setRating(rating) {
+    selectedRating = rating;
+    for (var i = 1; i <= 5; i++) {
+      var star =
+        document.getElementById('star' + i);
+      if (i <= rating) {
+        star.classList.add('active');
+      } else {
+        star.classList.remove('active');
+      }
+    }
+    var labels = [
+      '', 'Poor 😞', 'Fair 😐',
+      'Good 😊', 'Very Good 😃',
+      'Excellent 🌟'
+    ];
+    document.getElementById('ratingText')
+      .textContent =
+      labels[rating] +
+      ' (' + rating + '/5)';
+  }
+
+  // ===== SUBMIT REVIEW =====
+  function doSubmitReview() {
+    var bookingId =
+      document.getElementById('bookingSelect')
+      .value;
+    var comment =
+      document.getElementById('commentText')
+      .value.trim();
+    var errEl =
+      document.getElementById('submitErr');
+    var sucEl =
+      document.getElementById('submitSuccess');
+
+    if (!bookingId) {
+      errEl.textContent =
+        'Please select a booking';
+      return;
+    }
+    if (selectedRating === 0) {
+      errEl.textContent =
+        'Please select a star rating';
+      return;
+    }
+
+    errEl.textContent = '';
+    sucEl.textContent = 'Submitting...';
+
+    var token = localStorage.getItem('token');
+    fetch('/api/feedback', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({
+        bookingId: parseInt(bookingId),
+        rating:    selectedRating,
+        comment:   comment
+      })
+    })
+    .then(function(res) {
+      if (!res.ok) {
+        return res.text().then(function(t) {
+          throw new Error(t);
+        });
+      }
+      return res.json();
+    })
+    .then(function() {
+      sucEl.textContent =
+        '✅ Review submitted! Thank you.';
+      errEl.textContent = '';
+      selectedRating = 0;
+      for (var i = 1; i <= 5; i++) {
+        document.getElementById('star' + i)
+          .classList.remove('active');
+      }
+      document.getElementById('commentText')
+        .value = '';
+      document.getElementById('ratingText')
+        .textContent = 'Click a star to rate';
+      document.getElementById('bookingSelect')
+        .value = '';
+
+      setTimeout(function() {
+        showTab('all',
+          document.getElementById('tabAll'));
+      }, 2000);
+    })
+    .catch(function(err) {
+      sucEl.textContent = '';
+      errEl.textContent =
+        'Error: ' + err.message;
+    });
+  }
+
+</script>
+</body>
+</html>

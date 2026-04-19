@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DriveEasy - Premium Car Booking</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="data:,">
+</head>
+<body>
+
+<nav>
+    <a href="/" class="brand">🚗 DriveEasy</a>
+    <div class="nav-links">
+    <span id="navUserName" class="nav-user-name"
+          style="display:none;"></span>
+        <a href="cars.html">Browse Cars</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="feedback.html">Reviews</a>
+        <a href="chat.html">Chat</a>
+        <a href="driver.html">Driver Login</a>
+        <a href="#" id="authLink">Login</a>
+    </div>
+    <div class="hamburger" id="hamburger"
+         onclick="toggleMobileNav()">
+        <span></span><span></span><span></span>
+    </div>
+</nav>
+
+<div class="mobile-nav" id="mobileNav">
+  <span id="mobileUserName"
+        style="color:var(--accent);font-weight:700;
+        padding:0.5rem 1rem;"></span>
+    <a href="cars.html">🚗 Browse Cars</a>
+    <a href="dashboard.html">📋 Dashboard</a>
+    <a href="feedback.html">⭐ Reviews</a>
+    <a href="chat.html">💬 Chat</a>
+    <a href="driver.html">👨‍✈️ Driver Login</a>
+    <a href="#" id="mobileAuthLink">🔑 Login</a>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-content">
+        <h1>Book Your <span>Perfect Ride</span><br>Anytime, Anywhere</h1>
+        <p>Premium cars at affordable rates. Hourly or daily rentals
+            with professional drivers available on request.</p>
+        <div class="hero-btns">
+            <a href="cars.html" class="btn btn-accent btn-lg">
+                🚗 Browse Cars
+            </a>
+            <a href="login.html" class="btn btn-outline btn-lg"
+               id="heroAuthBtn">
+                Get Started
+            </a>
+        </div>
+    </div>
+    <div class="hero-stats">
+        <div class="hero-stat">
+            <span class="num">500+</span>
+            <span class="lbl">Happy Customers</span>
+        </div>
+        <div class="hero-stat">
+            <span class="num">50+</span>
+            <span class="lbl">Premium Cars</span>
+        </div>
+        <div class="hero-stat">
+            <span class="num">24/7</span>
+            <span class="lbl">Support</span>
+        </div>
+        <div class="hero-stat">
+            <span class="num">4.9★</span>
+            <span class="lbl">Rating</span>
+        </div>
+    </div>
+</section>
+
+<!-- QUICK SEARCH -->
+<div style="padding:0 1.5rem;">
+    <div class="quick-search-card">
+        <h2 style="color:var(--primary);margin-bottom:1.25rem;
+        font-size:1.15rem;font-weight:700;">
+            🔍 Quick Search
+        </h2>
+        <div class="quick-search-grid">
+            <div class="form-group" style="margin:0;">
+                <label>Car Type</label>
+                <select id="qs-type" onchange="quickSearch()">
+                    <option value="">All Types</option>
+                    <option value="LUXURY">Luxury</option>
+                    <option value="COMFORT">Comfort</option>
+                    <option value="NORMAL">Normal</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label>Min Seats</label>
+                <select id="qs-seats" onchange="quickSearch()">
+                    <option value="">Any Seats</option>
+                    <option value="4">4+ Seats</option>
+                    <option value="5">5+ Seats</option>
+                    <option value="7">7+ Seats</option>
+                </select>
+            </div>
+            <button class="btn btn-primary"
+                    onclick="quickSearch()">Search</button>
+        </div>
+    </div>
+</div>
+
+<!-- FEATURES -->
+<div class="section" style="margin-top:3rem;">
+    <h2 style="text-align:center;color:var(--primary);
+      margin-bottom:2rem;font-size:1.6rem;font-weight:800;">
+        Why Choose DriveEasy?
+    </h2>
+    <div class="features-grid">
+        <div class="feature-card">
+            <span class="feature-icon">🚗</span>
+            <h3>Wide Fleet</h3>
+            <p>Choose from Luxury, Comfort and Normal cars for every need</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">⏰</span>
+            <h3>Hourly & Daily</h3>
+            <p>Flexible booking — by hour or by day at unbeatable rates</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">👨‍✈️</span>
+            <h3>Expert Drivers</h3>
+            <p>Verified professional drivers available on request</p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">🔒</span>
+            <h3>Fully Insured</h3>
+            <p>All vehicles are insured and document-verified</p>
+        </div>
+    </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="section"
+     style="background:var(--bg-card);border-radius:var(--radius-lg);
+     box-shadow:var(--shadow-md);border:1px solid var(--border);">
+    <h2 style="text-align:center;color:var(--primary);
+      margin-bottom:2rem;font-size:1.6rem;font-weight:800;">
+        How It Works
+    </h2>
+    <div class="steps-grid">
+        <div class="step-card">
+            <div class="step-num">1</div>
+            <p>Browse Cars</p>
+        </div>
+        <div class="step-card">
+            <div class="step-num">2</div>
+            <p>Choose Date & Time</p>
+        </div>
+        <div class="step-card">
+            <div class="step-num">3</div>
+            <p>Confirm Booking</p>
+        </div>
+        <div class="step-card">
+            <div class="step-num accent">4</div>
+            <p>Enjoy Your Ride!</p>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <p>DriveEasy Car Booking &copy; 2026.
+        All rights reserved. |
+        <a href="mailto:pri8870627054@gmail.com">
+            Contact Support
+        </a>
+    </p>
+</footer>
+
+<script src="js/api.js"></script>
+<script>
+    var token    = localStorage.getItem('token');
+    var role     = localStorage.getItem('role');
+    var name     = localStorage.getItem('name');
+    var authLink       = document.getElementById('authLink');
+    var mobileAuthLink = document.getElementById('mobileAuthLink');
+    var nameEl         = document.getElementById('navUserName');
+    var mobileNameEl   = document.getElementById('mobileUserName');
+    var heroBtn        = document.getElementById('heroAuthBtn');
+
+    if (token) {
+      if (name) {
+        nameEl.textContent       = '👤 ' + name;
+        nameEl.style.display     = 'inline-flex';
+        mobileNameEl.textContent = '👤 ' + name;
+      }
+      if (role === 'ADMIN') {
+        authLink.textContent       = 'Admin Panel';
+        authLink.href              = '/admin.html';
+        mobileAuthLink.textContent = '⚙️ Admin Panel';
+        mobileAuthLink.href        = '/admin.html';
+      } else {
+        authLink.textContent       = 'Logout';
+        mobileAuthLink.textContent = '🚪 Logout';
+        heroBtn.textContent        = 'My Dashboard';
+        heroBtn.href               = '/dashboard.html';
+        authLink.onclick = mobileAuthLink.onclick = function() {
+          localStorage.clear(); location.reload();
+        };
+      }
+    } else {
+      authLink.href        = 'login.html';
+      mobileAuthLink.href  = 'login.html';
+    }
+
+    function toggleMobileNav() {
+      var nav = document.getElementById('mobileNav');
+      var ham = document.getElementById('hamburger');
+      nav.classList.toggle('open');
+      ham.classList.toggle('open');
+    }
+
+    function quickSearch() {
+      var type  = document.getElementById('qs-type').value;
+      var seats = document.getElementById('qs-seats').value;
+      window.location.href =
+        'cars.html?type=' + type + '&seats=' + seats;
+    }
+</script>
+</body>
+</html>

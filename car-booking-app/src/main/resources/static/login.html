@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - DriveEasy</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .auth-container { max-width: 420px; margin: 4rem auto; padding: 0 1rem; }
+    .auth-card { background: #fff; border-radius: 10px; box-shadow: 0 2px 16px rgba(0,0,0,0.10); padding: 2rem; }
+    .auth-title { text-align: center; color: #1a3c6e; font-size: 1.6rem; margin-bottom: 0.3rem; }
+    .auth-sub { text-align: center; color: #666; font-size: 0.9rem; margin-bottom: 1.5rem; }
+    .tab-btns { display: flex; margin-bottom: 1.5rem; border-bottom: 2px solid #eee; }
+    .tab-btn { flex: 1; padding: 0.7rem; border: none; background: transparent; font-size: 1rem; cursor: pointer; color: #666; font-weight: 500; transition: all 0.2s; border-bottom: 3px solid transparent; margin-bottom: -2px; }
+    .tab-btn.active { color: #1a3c6e; border-bottom: 3px solid #1a3c6e; }
+    .err { color: red; font-size: 0.88rem; margin-bottom: 0.8rem; text-align: center; min-height: 1.2rem; }
+    .success { color: green; font-size: 0.88rem; margin-bottom: 0.8rem; text-align: center; min-height: 1.2rem; }
+    .quick-links { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-top: 1.5rem; }
+    .quick-link { display: block; padding: 0.8rem; border-radius: 8px; text-align: center; text-decoration: none; font-size: 0.85rem; font-weight: 500; border: 1px solid #ddd; color: #444; transition: all 0.2s; }
+    .quick-link:hover { background: #f0f4ff; border-color: #1a3c6e; color: #1a3c6e; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="brand">DriveEasy</a>
+  <div>
+    <a href="cars.html">Browse Cars</a>
+    <a href="driver.html">Driver Login</a>
+    <a href="/">Home</a>
+  </div>
+</nav>
+
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-title">Welcome to DriveEasy</div>
+    <div class="auth-sub">Login or create an account to continue</div>
+
+    <div class="tab-btns">
+      <button class="tab-btn active" id="loginTab" onclick="showTab('login')">Login</button>
+      <button class="tab-btn" id="registerTab" onclick="showTab('register')">Register</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div id="loginForm">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="l-email" placeholder="Enter your email">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="l-password" placeholder="Enter your password">
+      </div>
+      <div id="loginErr" class="err"></div>
+      <button class="btn btn-primary" style="width:100%;padding:0.8rem;font-size:1rem;" onclick="doLogin()">Login</button>
+      <br><br>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div id="registerForm" style="display:none;">
+      <div class="form-group">
+        <label>Full Name *</label>
+        <input type="text" id="r-name" placeholder="Your full name">
+      </div>
+      <div class="form-group">
+        <label>Email *</label>
+        <input type="email" id="r-email" placeholder="Your email address">
+      </div>
+      <div class="form-group">
+        <label>Password *</label>
+        <input type="password" id="r-password" placeholder="Minimum 6 characters">
+      </div>
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="text" id="r-phone" placeholder="10-digit phone number">
+      </div>
+      <div id="registerErr" class="err"></div>
+      <div id="registerSuccess" class="success"></div>
+      <button class="btn btn-accent" style="width:100%;padding:0.8rem;font-size:1rem;" onclick="doRegister()">Create Account</button>
+      <br><br>
+      <p style="text-align:center;font-size:0.85rem;color:#666;">
+        Already have an account?
+        <a href="#" onclick="showTab('login')" style="color:#1a3c6e;font-weight:500;">Login here</a>
+      </p>
+    </div>
+
+    <div class="quick-links">
+      <a href="driver.html" class="quick-link">Driver Login</a>
+      <a href="cars.html"   class="quick-link">Browse Cars</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // =============================================
+  // FIX (Bug 3): Auto-login issue
+  //
+  // ROOT CAUSE: The original code did this:
+  //   var token = localStorage.getItem('token');
+  //   if (token) { redirect to admin or home }
+  //
+  // PROBLEM: When you log in as admin and then
+  // close the browser, the token stays in
+  // localStorage. Next time you open login.html,
+  // the page sees the old token and immediately
+  // redirects you to /admin.html WITHOUT asking
+  // for credentials. This makes it look like you
+  // are "auto logged in as admin".
+  //
+  // FIX: Before checking localStorage, verify
+  // the token is still valid by calling the
+  // /api/bookings/my endpoint (which requires
+  // auth). If the server rejects it (401/403),
+  // clear localStorage and stay on login page.
+  // If valid, then redirect.
+  //
+  // FIX (Bug 2): Admin login after logout
+  // After calling logout(), localStorage is
+  // cleared. But if the token was already expired
+  // or invalid, Spring Security would reject it
+  // and the redirect check above handles it.
+  // Also ensure logout() in other pages always
+  // calls localStorage.clear() before redirecting.
+  // =============================================
+
+  window.onload = async function() {
+    var token = localStorage.getItem('token');
+    var role  = localStorage.getItem('role');
+
+    // If no token stored, stay on login page
+    if (!token) return;
+
+    // Validate the stored token is still accepted
+    // by the server — don't trust localStorage alone
+    try {
+      var res = await fetch('/api/bookings/my', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+
+      if (res.status === 401 || res.status === 403) {
+        // Token is expired or invalid — clear it
+        // and let user log in fresh
+        localStorage.clear();
+        return;
+      }
+
+      // Token is valid — redirect to correct page
+      if (role === 'ADMIN') {
+        window.location.href = '/admin.html';
+      } else {
+        window.location.href = '/';
+      }
+    } catch(e) {
+      // Network error — stay on login page
+      // Don't redirect based on a failed check
+      localStorage.clear();
+    }
+  };
+
+  function showTab(tab) {
+    document.getElementById('loginForm').style.display    = tab === 'login' ? 'block' : 'none';
+    document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+    document.getElementById('loginTab').classList.toggle('active', tab === 'login');
+    document.getElementById('registerTab').classList.toggle('active', tab === 'register');
+    document.getElementById('loginErr').textContent        = '';
+    document.getElementById('registerErr').textContent     = '';
+    document.getElementById('registerSuccess').textContent = '';
+  }
+
+  async function doLogin() {
+    var email    = document.getElementById('l-email').value.trim();
+    var password = document.getElementById('l-password').value.trim();
+    var errEl    = document.getElementById('loginErr');
+
+    if (!email || !password) {
+      errEl.textContent = 'Please enter email and password';
+      return;
+    }
+
+    try {
+      errEl.textContent = 'Logging in...';
+
+      var res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, password: password })
+      });
+
+      if (!res.ok) {
+        // =============================================
+        // FIX (Bug 1): Login fails with "Invalid password"
+        //
+        // If you reach this branch, it means the
+        // server returned 4xx. This is caused by
+        // the JWT_SECRET being too short (< 32 chars).
+        // When jjwt tries to sign a token with a
+        // 16-char secret, it fails internally, making
+        // Spring Security reject the authentication.
+        //
+        // After fixing JWT_SECRET to 64 chars in
+        // docker-compose.yml, this will no longer
+        // happen for valid credentials.
+        // =============================================
+        errEl.textContent = 'Invalid email or password. Please try again.';
+        return;
+      }
+
+      var data = await res.json();
+
+      // Store everything needed by other pages
+      localStorage.setItem('token',  data.token);
+      localStorage.setItem('role',   data.role);
+      localStorage.setItem('userId', data.userId);
+      localStorage.setItem('email',  data.email);
+      localStorage.setItem('name',   data.name);
+
+      if (data.role === 'ADMIN') {
+        window.location.href = '/admin.html';
+      } else {
+        window.location.href = '/';
+      }
+
+    } catch(e) {
+      errEl.textContent = 'Connection error. Is the server running?';
+    }
+  }
+
+  async function doRegister() {
+    var name     = document.getElementById('r-name').value.trim();
+    var email    = document.getElementById('r-email').value.trim();
+    var password = document.getElementById('r-password').value.trim();
+    var phone    = document.getElementById('r-phone').value.trim();
+    var errEl    = document.getElementById('registerErr');
+    var sucEl    = document.getElementById('registerSuccess');
+
+    if (!name || !email || !password) {
+      errEl.textContent = 'Please fill Name, Email and Password';
+      return;
+    }
+    if (password.length < 6) {
+      errEl.textContent = 'Password must be at least 6 characters';
+      return;
+    }
+    if (!email.includes('@')) {
+      errEl.textContent = 'Please enter a valid email address';
+      return;
+    }
+
+    try {
+      errEl.textContent = '';
+      sucEl.textContent = 'Creating account...';
+
+      var res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name:     name,
+          email:    email,
+          password: password,
+          phone:    phone
+        })
+      });
+
+      if (!res.ok) {
+        var msg = await res.text();
+        sucEl.textContent = '';
+        errEl.textContent = msg.includes('already')
+          ? 'Email already registered. Please login.'
+          : 'Registration failed: ' + msg;
+        return;
+      }
+
+      sucEl.textContent = 'Account created! Redirecting to login...';
+      errEl.textContent = '';
+      setTimeout(function() {
+        showTab('login');
+        document.getElementById('l-email').value = email;
+      }, 2000);
+
+    } catch(e) {
+      sucEl.textContent = '';
+      errEl.textContent = 'Connection error. Is the server running?';
+    }
+  }
+
+  document.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      var loginVisible = document.getElementById('loginForm').style.display !== 'none';
+      if (loginVisible) doLogin(); else doRegister();
+    }
+  });
+</script>
+</body>
+</html>

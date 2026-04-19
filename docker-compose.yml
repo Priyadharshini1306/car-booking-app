@@ -1,0 +1,26 @@
+
+services:
+
+  app:
+    build: .
+    container_name: carbooking-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+
+      # Activate docker profile
+      SPRING_PROFILES_ACTIVE: docker
+
+      # AIVEN MYSQL CONFIG (EXTERNAL DB)
+      DB_URL: jdbc:mysql://mysql-acf9221-priyarajan1306-cbbd.c.aivencloud.com:15092/defaultdb?sslMode=REQUIRED&allowPublicKeyRetrieval=true
+      DB_USER: avnadmin
+      DB_PASS: ${DB_PASS}
+
+      # JWT (must be long)
+      JWT_SECRET: mySuperSecretKeyMySuperSecretKeyMySuperSecretKey123456
+
+      # EMAIL
+      MAIL_USER: pri8870627054@gmail.com
+      MAIL_PASS: cdagegkkavmbeqxv
+      ADMIN_EMAIL: priyarajan1306@gmail.com
